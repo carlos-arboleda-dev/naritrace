@@ -20,6 +20,18 @@ export interface Lote {
   variedad?: string;
 }
 
+export interface Producto {
+  id: number;
+  nombre: string;
+  categoria_display: string;
+}
+
+export interface Finca {
+  id: number;
+  nombre: string;
+  municipio: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -64,5 +76,21 @@ export class ApiService {
 
   publicarLote(id: number): Observable<any> {
     return this.http.post<any>(`${this.API_URL}/lotes/${id}/publicar/`, {}, { headers: this.getHeaders() });
+  }
+
+
+  // ==================== PRODUCTOS Y FINCAS ====================
+  getProductos(): Observable<Producto[]> {
+    return this.http.get<Producto[]>(`${this.API_URL}/productos/`, { headers: this.getHeaders() });
+  }
+
+  getFincas(): Observable<Finca[]> {
+    return this.http.get<Finca[]>(`${this.API_URL}/fincas/`, { headers: this.getHeaders() });
+  }
+
+  // ==================== TRAZABILIDAD PÚBLICA ====================
+  getTrazabilidadPublica(codigo: string): Observable<any> {
+    // Este no lleva headers porque es público
+    return this.http.get<any>(`${this.API_URL}/publico/trazabilidad/${codigo}/`);
   }
 }

@@ -198,7 +198,8 @@ class Lote(models.Model):
 
             # Generar URL del QR
             if not self.qr_codigo and self.codigo:
-                self.qr_codigo = f"https://naritrace.co/lote/{self.codigo}"
+                self.qr_codigo = f"http://localhost:4200/trazabilidad/{self.codigo}"
+
 
             super().save(*args, **kwargs)
 
