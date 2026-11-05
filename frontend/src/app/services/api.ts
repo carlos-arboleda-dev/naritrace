@@ -93,4 +93,9 @@ export class ApiService {
     // Este no lleva headers porque es público
     return this.http.get<any>(`${this.API_URL}/publico/trazabilidad/${codigo}/`);
   }
+
+    // ==================== REGISTRO ====================
+  registrarUsuario(data: any): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/usuarios/registro/`, data);
+  }
 }

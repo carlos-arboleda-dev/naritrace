@@ -1,0 +1,15 @@
+/* Al estar separado del .ts, mantenemos los estilos aquí */
+.bg-panel-verde {
+  background-color: #0E3B2E !important;
+}
+
+/* Estilos para los botones de radio que parecen tarjetas */
+.btn-check:checked + .btn-outline-success {
+  background-color: #d1e7dd !important; /* Verde muy claro */
+  border-color: #198754;
+  color: #0f5132;
+}
+.btn-outline-success {
+  border-color: #dee2e6;
+  color: #6c757d;
+}

@@ -34,6 +34,7 @@ urlpatterns = [
 
     # API principal
     path('api/', include('trazabilidad.urls')),
+    path('api/usuarios/', include('usuarios.urls')),
 
     # Swagger
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

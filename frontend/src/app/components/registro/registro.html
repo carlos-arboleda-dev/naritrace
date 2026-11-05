@@ -1,0 +1,108 @@
+<div class="d-flex vh-100">
+  <!-- Panel Izquierdo (Igual al Login) -->
+  <div class="d-none d-md-flex col-md-5 bg-panel-verde text-white flex-column justify-content-center p-5">
+    <div class="mb-5">
+      <h3 class="fw-bold mb-2"><span class="me-2">🌱</span> NariTrace</h3>
+    </div>
+    <h1 class="display-5 fw-bold mb-3">El origen nos conecta.</h1>
+    <p class="fs-5 opacity-75 mb-5">Un espacio para quienes producen, transportan y comparten la historia del campo colombiano.</p>
+    
+    <img src="https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?q=80&w=800" 
+         class="img-fluid rounded-4 mt-auto mb-4 object-fit-cover shadow-lg" style="height: 300px;">
+         
+    <div class="mt-3">
+      <h5 class="fw-bold">Historias que empiezan en la tierra.</h5>
+      <p class="small opacity-75">Buesaco, Nariño · Colombia</p>
+    </div>
+  </div>
+
+  <!-- Panel Derecho (Formulario de Registro) -->
+  <div class="col-md-7 d-flex flex-column justify-content-center px-4 px-md-5 bg-light py-5 overflow-auto">
+    <div class="mx-auto" style="width: 100%; max-width: 500px;">
+      <a routerLink="/" class="text-decoration-none text-muted mb-4 d-inline-block small">&larr; Volver al inicio</a>
+
+      <div class="d-flex mb-4 bg-success bg-opacity-10 rounded-3 p-1">
+        <a routerLink="/login" class="btn btn-link text-success w-50 fw-bold text-decoration-none py-2">Iniciar sesión</a>
+        <button class="btn btn-success w-50 fw-bold rounded-3 py-2">Crear cuenta</button>
+      </div>
+
+      <h2 class="fw-bold mb-2">Crea tu cuenta en NariTrace</h2>
+      <p class="text-muted mb-4">Empieza a conectar el origen de tus productos.</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        
+        <label class="form-label fw-bold text-muted small mb-2">¿Cómo participas?</label>
+        <div class="row mb-3">
+          <div class="col-6">
+            <input type="radio" class="btn-check" formControlName="rol" value="productor" id="rolProd">
+            <label class="btn btn-outline-success w-100 text-start p-3" for="rolProd">
+              <div class="mb-1">🌱</div>
+              <strong>Productor</strong>
+            </label>
+          </div>
+          <div class="col-6">
+            <input type="radio" class="btn-check" formControlName="rol" value="distribuidor" id="rolDist">
+            <label class="btn btn-outline-success w-100 text-start p-3" for="rolDist">
+              <div class="mb-1">🚚</div>
+              <strong>Distribuidor</strong>
+            </label>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-muted small">Nombre completo *</label>
+            <input type="text" class="form-control" formControlName="nombre" placeholder="María Rodríguez">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-muted small">Municipio *</label>
+            <select class="form-select" formControlName="municipio">
+              <option value="Buesaco, Nariño">Buesaco, Nariño</option>
+              <option value="Pasto, Nariño">Pasto, Nariño</option>
+              <option value="Tumaco, Nariño">Tumaco, Nariño</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-muted small">Correo electrónico *</label>
+          <input type="email" class="form-control" formControlName="email" placeholder="maria@ejemplo.co">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-muted small">Celular *</label>
+          <input type="text" class="form-control" formControlName="celular" placeholder="+57 310 555 0186">
+          <small class="text-muted" style="font-size: 0.75rem;">Para comunicaciones sobre tu cuenta. No se publica.</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-muted small">Contraseña *</label>
+          <input type="password" class="form-control" formControlName="password" placeholder="••••••••">
+          <small class="text-muted" style="font-size: 0.75rem;">Al menos 8 caracteres, una letra y un número.</small>
+        </div>
+
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" formControlName="terminos" id="term">
+          <label class="form-check-label small text-muted" for="term">
+            Acepto los términos de uso y la política de tratamiento de datos personales.
+          </label>
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
+
+        <button type="submit" class="btn btn-success w-100 btn-lg fw-bold mb-3" [disabled]="form.invalid || loading">
+          {{ loading ? 'Creando cuenta...' : 'Crear cuenta de productor →' }}
+        </button>
+      </form>
+      
+      <div class="text-center small text-muted mb-4">
+        ¿Ya tienes una cuenta? <a routerLink="/login" class="text-success fw-bold text-decoration-none">Iniciar sesión</a>
+      </div>
+
+      <div class="alert alert-success bg-success bg-opacity-10 border-0 small text-success d-flex align-items-center">
+        <span class="me-2 fs-5">ℹ️</span> El acceso de administración se asigna por invitación. Para consultar un QR público no necesitas una cuenta.
+      </div>
+
+    </div>
+  </div>
+</div>

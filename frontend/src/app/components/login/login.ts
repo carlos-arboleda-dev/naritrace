@@ -8,76 +8,8 @@ import { ApiService } from '../../services/api';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
-    <div class="d-flex vh-100">
-      <!-- Panel Izquierdo (Verde) -->
-      <div class="d-none d-md-flex col-md-5 bg-success text-white flex-column justify-content-center p-5" 
-           style="background-color: #0E3B2E !important;">
-        <div class="mb-5">
-          <h3 class="fw-bold mb-2"><span class="me-2">🌱</span> NariTrace</h3>
-        </div>
-        <h1 class="display-5 fw-bold mb-3">El origen nos conecta.</h1>
-        <p class="fs-5 opacity-75 mb-5">Un espacio para quienes producen, transportan y comparten la historia del campo colombiano.</p>
-        
-        <img src="https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?q=80&w=800" 
-             class="img-fluid rounded-4 mt-auto mb-4 object-fit-cover shadow-lg" style="height: 300px;">
-             
-        <div class="mt-3">
-          <h5 class="fw-bold">Historias que empiezan en la tierra.</h5>
-          <p class="small opacity-75">Buesaco, Nariño · Colombia</p>
-        </div>
-      </div>
-
-      <!-- Panel Derecho (Formulario) -->
-      <div class="col-md-7 d-flex flex-column justify-content-center px-4 px-md-5 bg-light">
-        <div class="mx-auto" style="width: 100%; max-width: 450px;">
-          
-          <a routerLink="/" class="text-decoration-none text-muted mb-4 d-inline-block small">
-            &larr; Volver al inicio
-          </a>
-
-          <div class="d-flex mb-4 bg-success bg-opacity-10 rounded-3 p-1">
-            <button class="btn btn-success w-50 fw-bold rounded-3 py-2">Iniciar sesión</button>
-            <a routerLink="/registro" class="btn btn-link text-success w-50 fw-bold text-decoration-none py-2">Crear cuenta</a>
-          </div>
-
-          <h2 class="fw-bold mb-2">Qué bueno tenerte de vuelta</h2>
-          <p class="text-muted mb-4">Ingresa a tu espacio de trabajo y continúa tu historia.</p>
-
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <div class="mb-3">
-              <label class="form-label fw-bold text-muted small">Correo electrónico *</label>
-              <input type="email" class="form-control form-control-lg bg-white border-1" formControlName="username" placeholder="tu@correo.com">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold text-muted small">Contraseña *</label>
-              <input type="password" class="form-control form-control-lg bg-white border-1" formControlName="password" placeholder="••••••••">
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="remember">
-                <label class="form-check-label small text-muted" for="remember">Recordar mi sesión</label>
-              </div>
-              <a href="#" class="small text-success text-decoration-none fw-bold">¿Olvidaste tu contraseña?</a>
-            </div>
-
-            <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
-
-            <button type="submit" class="btn btn-success w-100 btn-lg fw-bold mb-3" [disabled]="form.invalid || loading">
-              {{ loading ? 'Ingresando...' : 'Ingresar como productor' }}
-            </button>
-          </form>
-          
-          <div class="alert alert-success bg-success bg-opacity-10 border-0 small text-success mt-4 d-flex align-items-center">
-            <span class="me-2 fs-5">ℹ️</span> Tu sesión es privada. La información pública de un lote se consulta sin iniciar sesión.
-          </div>
-
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './login.html', // <-- Apunta al HTML
+  styleUrl: './login.css'      // <-- Apunta al CSS
 })
 export class LoginComponent {
   form: FormGroup;
@@ -95,11 +27,10 @@ export class LoginComponent {
     if (this.form.invalid) return;
     this.loading = true;
     
-    // NOTA: Django por defecto usa 'username'. Si usas correo, asegúrate de que el backend lo acepte.
     this.api.login(this.form.value.username, this.form.value.password).subscribe({
       next: (res) => {
         localStorage.setItem('token', res.token);
-        this.router.navigate(['/dashboard/lotes']);
+        this.router.navigate(['/dashboard/lotes']); // Ojo: router.router es un error tipográfico, debe ser this.router.navigate
       },
       error: () => {
         this.error = 'Credenciales incorrectas. Verifica tu correo y contraseña.';
