@@ -1,1 +1,82 @@
-<p>detalle-lote works!</p>
+<div class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Detalle del Lote</h2>
+    <a routerLink="/dashboard/lotes" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <div class="row" *ngIf="lote">
+    <!-- Columna Izquierda: Info y QR -->
+    <div class="col-md-5 mb-4">
+      <div class="card shadow-sm p-4 border-0 mb-4">
+        <h4 class="text-success fw-bold">{{ lote.codigo }}</h4>
+        <p class="mb-1"><strong>Producto:</strong> {{ lote.producto.nombre }}</p>
+        <p class="mb-1"><strong>Finca:</strong> {{ lote.finca.nombre }}</p>
+        <p class="mb-1"><strong>Cantidad:</strong> {{ lote.cantidad }} {{ lote.unidad }}</p>
+        <p class="mb-3"><strong>Estado:</strong> <span class="badge bg-primary">{{ lote.estado_display }}</span></p>
+        
+        <div class="text-center border-top pt-3">
+          <qrcode [qrdata]="lote.qr_codigo" [width]="180" [errorCorrectionLevel]="'M'"></qrcode>
+          <button *ngIf="lote.estado === 'borrador'" (click)="publicar()" class="btn btn-success w-100 mt-3">
+            Publicar Lote
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna Derecha: Movimientos y Línea de Tiempo -->
+    <div class="col-md-7">
+      <!-- Formulario de nuevo movimiento -->
+      <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Agregar Evento a la Cadena</h5>
+          <form [formGroup]="formMovimiento" (ngSubmit)="agregarMovimiento()">
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <select formControlName="tipo" class="form-select">
+                  <option value="cosecha">Cosecha</option>
+                  <option value="beneficio">Beneficio</option>
+                  <option value="acopio">Acopio</option>
+                  <option value="transporte">Transporte</option>
+                  <option value="distribucion">Distribución</option>
+                  <option value="entrega">Entrega</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <input type="text" formControlName="descripcion" class="form-control" placeholder="Descripción del evento">
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <input type="text" formControlName="origen" class="form-control" placeholder="Origen (opcional)">
+              </div>
+              <div class="col-md-6">
+                <input type="text" formControlName="destino" class="form-control" placeholder="Destino (opcional)">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-outline-success w-100" [disabled]="formMovimiento.invalid || guardandoMovimiento">
+              {{ guardandoMovimiento ? 'Guardando...' : '+ Añadir Evento' }}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Lista de Movimientos -->
+      <h5 class="fw-bold mb-3">Historial del Lote</h5>
+      <div class="timeline">
+        <div class="timeline-item" *ngFor="let mov of movimientos; let i = index">
+          <div class="timeline-marker bg-success text-white">{{ mov.tipo.charAt(0).toUpperCase() }}</div>
+          <div class="timeline-content card border-0 shadow-sm mb-3">
+            <div class="card-body">
+              <h6 class="fw-bold text-success text-capitalize mb-1">{{ mov.tipo }}</h6>
+              <p class="mb-1">{{ mov.descripcion }}</p>
+              <small class="text-muted">{{ mov.fecha | date:'dd/MM/yyyy HH:mm' }} - {{ mov.actor_nombre }}</small>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="movimientos.length === 0" class="text-muted text-center py-4">
+          No hay eventos registrados aún.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

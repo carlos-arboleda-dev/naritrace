@@ -1,0 +1,66 @@
+<div class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Registrar Nueva Finca</h2>
+    <a routerLink="/dashboard/fincas" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <div class="card shadow-sm p-4 border-0" style="max-width: 800px;">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <label class="form-label fw-bold text-muted small">Nombre de la Finca *</label>
+          <input type="text" formControlName="nombre" class="form-control" placeholder="Ej: El Mirador">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold text-muted small">Área (Hectáreas) *</label>
+          <input type="number" formControlName="area_hectareas" class="form-control" placeholder="Ej: 2.5">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Departamento *</label>
+          <input type="text" formControlName="departamento" class="form-control" readonly>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Municipio *</label>
+          <select formControlName="municipio" class="form-select">
+            <option value="">Seleccione un municipio</option>
+            <option value="Buesaco">Buesaco</option>
+            <option value="Pasto">Pasto</option>
+            <option value="Tumaco">Tumaco</option>
+            <option value="La Unión">La Unión</option>
+            <option value="Sandona">Sandona</option>
+            <option value="Consacá">Consacá</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold text-muted small">Vereda / Corregimiento</label>
+        <input type="text" formControlName="vereda" class="form-control" placeholder="Ej: La Esperanza">
+      </div>
+
+      <!-- Geolocalización (Opcional por ahora, pero deja el campo listo) -->
+      <h6 class="fw-bold text-success mb-3 mt-4">Geolocalización (Opcional)</h6>
+      <div class="row mb-4 bg-light p-3 rounded-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Latitud</label>
+          <input type="number" formControlName="latitud" class="form-control" placeholder="Ej: 1.3833">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Longitud</label>
+          <input type="number" formControlName="longitud" class="form-control" placeholder="Ej: -77.1500">
+        </div>
+        <small class="text-muted mt-2">Puedes obtener estas coordenadas desde Google Maps.</small>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger small">{{ error }}</div>
+
+      <button type="submit" class="btn btn-success px-4" [disabled]="enviando">
+        {{ enviando ? 'Guardando...' : 'Guardar Finca' }}
+      </button>
+    </form>
+  </div>
+</div>

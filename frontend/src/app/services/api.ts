@@ -88,6 +88,10 @@ export class ApiService {
     return this.http.get<Finca[]>(`${this.API_URL}/fincas/`, { headers: this.getHeaders() });
   }
 
+  crearFinca(finca: any): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/fincas/`, finca, { headers: this.getHeaders() });
+  }
+
   // ==================== TRAZABILIDAD PÚBLICA ====================
   getTrazabilidadPublica(codigo: string): Observable<any> {
     // Este no lleva headers porque es público
@@ -97,5 +101,14 @@ export class ApiService {
     // ==================== REGISTRO ====================
   registrarUsuario(data: any): Observable<any> {
     return this.http.post<any>(`${this.API_URL}/usuarios/registro/`, data);
+  }
+
+    // ==================== MOVIMIENTOS ====================
+  crearMovimiento(data: any): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/movimientos/`, data, { headers: this.getHeaders() });
+  }
+
+  getMovimientos(loteId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/movimientos/?lote=${loteId}`, { headers: this.getHeaders() });
   }
 }

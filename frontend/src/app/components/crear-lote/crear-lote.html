@@ -1,1 +1,81 @@
-<p>crear-lote works!</p>
+<div class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Registrar Nuevo Lote</h2>
+    <a routerLink="/dashboard/lotes" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <div class="card shadow-sm p-4 border-0" style="max-width: 800px;">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Producto *</label>
+          <select formControlName="producto" class="form-select">
+            <option value="">Seleccione un producto</option>
+            <option *ngFor="let p of productos" [value]="p.id">{{ p.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Finca de Origen *</label>
+          <select formControlName="finca" class="form-select">
+            <option value="">Seleccione una finca</option>
+            <option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }} - {{ f.municipio }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Variedad</label>
+          <input type="text" formControlName="variedad" class="form-control" placeholder="Ej: Castillo">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-muted small">Cantidad *</label>
+          <input type="number" formControlName="cantidad" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-muted small">Unidad</label>
+          <select formControlName="unidad" class="form-select">
+            <option value="kg">Kilogramos</option>
+            <option value="lb">Libras</option>
+            <option value="unidades">Unidades</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Fecha de Cosecha *</label>
+          <!-- El formato YYYY-MM-DD lo maneja bien el navegador -->
+          <input type="date" formControlName="fecha_cosecha" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-muted small">Proceso</label>
+          <input type="text" formControlName="proceso" class="form-control" placeholder="Ej: Lavado, Secado">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold text-muted small">Notas de producción (Opcional)</label>
+        <textarea formControlName="notas_produccion" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger small">{{ error }}</div>
+
+      <button type="submit" class="btn btn-success px-4" [disabled]="enviando">
+        {{ enviando ? 'Guardando...' : 'Guardar Lote' }}
+      </button>
+    </form>
+
+    <!-- Errores visuales -->
+    <div *ngIf="form.invalid && (form.dirty || form.touched)" class="alert alert-warning mt-3 small">
+      <strong>Revisa los siguientes campos:</strong>
+      <ul class="mb-0">
+        <li *ngIf="form.get('producto')?.invalid">Selecciona un producto</li>
+        <li *ngIf="form.get('finca')?.invalid">Selecciona una finca</li>
+        <li *ngIf="form.get('cantidad')?.invalid">La cantidad debe ser mayor a 0</li>
+        <li *ngIf="form.get('fecha_cosecha')?.invalid">Selecciona la fecha de cosecha</li>
+      </ul>
+    </div>
+  </div>
+</div>

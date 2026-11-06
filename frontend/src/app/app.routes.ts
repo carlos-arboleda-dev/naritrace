@@ -8,6 +8,7 @@ import { TrazabilidadPublicaComponent } from './components/trazabilidad-publica/
 import { ListaFincasComponent } from './components/lista-fincas/lista-fincas';
 import { LandingComponent } from './components/landing/landing';
 import { RegistroComponent } from './components/registro/registro';
+import { CrearFincaComponent } from './components/crear-finca/crear-finca';
 
 
 export const routes: Routes = [
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'registro', component: RegistroComponent },
   // RUTA PÚBLICA (El cliente escanea el QR y entra aquí)
   { path: 'trazabilidad/:codigo', component: TrazabilidadPublicaComponent }, 
+
   {
     path: 'dashboard',
     component: DashboardComponent,
@@ -25,7 +27,8 @@ export const routes: Routes = [
       { path: 'lotes', component: ListaLotesComponent },
       { path: 'lotes/nuevo', component: CrearLoteComponent },
       { path: 'lotes/:id', component: DetalleLoteComponent },
-      { path: 'fincas', component: ListaFincasComponent } 
+      { path: 'fincas', component: ListaFincasComponent },
+      { path: 'fincas/nueva', component: CrearFincaComponent },
     ]
   },
   { path: '**', redirectTo: '' }

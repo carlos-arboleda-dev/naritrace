@@ -159,9 +159,6 @@ class LoteViewSet(viewsets.ModelViewSet):
 # MOVIMIENTO VIEWSET
 # ============================================
 class MovimientoViewSet(viewsets.ModelViewSet):
-    """
-    Movimientos en la cadena de suministro.
-    """
     queryset = Movimiento.objects.all()
     serializer_class = MovimientoSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -171,15 +168,11 @@ class MovimientoViewSet(viewsets.ModelViewSet):
         lote_id = self.request.query_params.get('lote')
         if lote_id:
             queryset = queryset.filter(lote_id=lote_id)
-        tipo = self.request.query_params.get('tipo')
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
         return queryset
 
     def perform_create(self, serializer):
         # El actor siempre es el usuario autenticado
         serializer.save(actor=self.request.user)
-
 
 # ============================================
 # CERTIFICACION VIEWSET

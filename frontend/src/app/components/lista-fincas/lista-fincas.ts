@@ -11,7 +11,7 @@ import { ApiService } from '../../services/api';
     <div class="p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Mis Fincas</h2>
-        <button class="btn btn-success" disabled>+ Nueva Finca (Próximamente)</button>
+        <a routerLink="/dashboard/fincas/nueva" class="btn btn-success">+ Nueva Finca</a>
       </div>
 
       <div *ngIf="cargando" class="text-center py-5 text-muted">

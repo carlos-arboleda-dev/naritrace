@@ -39,7 +39,7 @@ class FincaSerializer(serializers.ModelSerializer):
             'latitud', 'longitud', 'area_hectareas', 'poligono_geojson',
             'activa', 'fecha_registro', 'total_lotes'
         ]
-        read_only_fields = ['fecha_registro']
+        read_only_fields = ['productor', 'fecha_registro']
 
 
 # ============================================
@@ -61,7 +61,7 @@ class MovimientoSerializer(serializers.ModelSerializer):
             'descripcion', 'latitud', 'longitud',
             'hash_blockchain', 'fecha'
         ]
-        read_only_fields = ['fecha', 'hash_blockchain']
+        read_only_fields = ['actor', 'fecha', 'hash_blockchain']
 
 
 # ============================================
@@ -112,7 +112,7 @@ class LoteListSerializer(serializers.ModelSerializer):
             'estado', 'estado_display', 'total_movimientos',
             'fecha_creacion'
         ]
-        read_only_fields = ['codigo', 'fecha_creacion']
+        read_only_fields = ['productor', 'codigo', 'fecha_creacion']
 
 
 class LoteDetailSerializer(serializers.ModelSerializer):
