@@ -111,4 +111,18 @@ export class ApiService {
   getMovimientos(loteId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.API_URL}/movimientos/?lote=${loteId}`, { headers: this.getHeaders() });
   }
+
+    // ==================== ESTADÍSTICAS (Admin) ====================
+  getEstadisticas(): Observable<any> {
+    return this.http.get<any>(`${this.API_URL}/estadisticas/`, { headers: this.getHeaders() });
+  }
+
+  // Guardar el rol del usuario al hacer login
+  setUserRole(rol: string) {
+    localStorage.setItem('rol', rol);
+  }
+  
+  getUserRole(): string {
+    return localStorage.getItem('rol') || 'cliente';
+  }
 }

@@ -23,6 +23,11 @@ import { Router } from '@angular/router';
               Mis Fincas
             </a>
           </li>
+          <li class="nav-item" *ngIf="rol === 'administrador'">
+            <a routerLink="/dashboard/admin" routerLinkActive="active" class="nav-link text-white">
+              Panel Admin
+            </a>
+          </li>
         </ul>
         <hr>
         <button (click)="logout()" class="btn btn-outline-light btn-sm">Cerrar Sesión</button>

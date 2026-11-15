@@ -216,3 +216,6 @@ class TrazabilidadPublicaViewSet(viewsets.ViewSet):
             )
         serializer = TrazabilidadPublicaSerializer(lote)
         return Response(serializer.data)
+
+
+

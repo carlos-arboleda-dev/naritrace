@@ -9,6 +9,7 @@ import { ListaFincasComponent } from './components/lista-fincas/lista-fincas';
 import { LandingComponent } from './components/landing/landing';
 import { RegistroComponent } from './components/registro/registro';
 import { CrearFincaComponent } from './components/crear-finca/crear-finca';
+import { AdminPanelComponent } from './components/admin-panel/admin-panel';
 
 
 export const routes: Routes = [
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: 'lotes/:id', component: DetalleLoteComponent },
       { path: 'fincas', component: ListaFincasComponent },
       { path: 'fincas/nueva', component: CrearFincaComponent },
+      { path: 'admin', component: AdminPanelComponent }
     ]
   },
   { path: '**', redirectTo: '' }
