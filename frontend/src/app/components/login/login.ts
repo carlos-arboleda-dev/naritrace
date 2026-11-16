@@ -30,7 +30,7 @@ export class LoginComponent {
     this.api.login(this.form.value.username, this.form.value.password).subscribe({
       next: (res) => {
         localStorage.setItem('token', res.token);
-        this.router.navigate(['/dashboard/lotes']); // Ojo: router.router es un error tipográfico, debe ser this.router.navigate
+        this.router.navigate(['/dashboard/resumen']);
       },
       error: () => {
         this.error = 'Credenciales incorrectas. Verifica tu correo y contraseña.';

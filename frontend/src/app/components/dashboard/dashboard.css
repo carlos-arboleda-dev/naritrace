@@ -1,0 +1,62 @@
+:host { display: block; }
+.shell { display: flex; min-height: 100vh; background: var(--nt-crema); }
+
+/* ---------- Menú lateral ---------- */
+.menu {
+  width: 248px; flex: none; background: var(--nt-verde-900); color: #fff;
+  display: flex; flex-direction: column; padding: 18px 14px;
+  position: sticky; top: 0; height: 100vh;
+}
+.marca { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; margin-bottom: 26px; }
+.marca-logo {
+  width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  border: 1.5px solid var(--nt-menta); color: var(--nt-menta);
+}
+.marca-nombre { font-weight: 800; font-size: 18px; letter-spacing: -.2px; }
+
+.espacio { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; margin-bottom: 18px; }
+.etiqueta { font-size: 9.5px; letter-spacing: .08em; color: var(--nt-menta); font-weight: 600; }
+.espacio strong { font-size: 14px; }
+.espacio small, .espacio small a { font-size: 12px; color: var(--nt-menta); text-decoration: none; }
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav a {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px;
+  color: #d6efe2; text-decoration: none; font-size: 14px; font-weight: 600; transition: background .15s;
+}
+.nav a:hover { background: rgba(255,255,255,.08); }
+.nav a.activo { background: var(--nt-verde-700); color: #fff; }
+
+.menu-pie { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+.enlace-suave { color: var(--nt-menta); font-size: 12.5px; text-decoration: none; padding: 0 4px; }
+.enlace-suave:hover { color: #fff; }
+.usuario { display: flex; align-items: center; gap: 10px; padding: 10px 4px 0; border-top: 1px solid rgba(255,255,255,.1); }
+.usuario-datos { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; flex: 1; }
+.usuario-datos strong { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.usuario-datos small { font-size: 11px; color: var(--nt-menta); }
+.salir { background: none; border: 0; color: var(--nt-menta); padding: 4px; border-radius: 6px; cursor: pointer; }
+.salir:hover { color: #fff; background: rgba(255,255,255,.1); }
+
+.avatar {
+  width: 32px; height: 32px; border-radius: 8px; flex: none; display: grid; place-items: center;
+  background: #489371; color: #fff; font-size: 11px; font-weight: 700;
+}
+.avatar-claro { background: var(--nt-menta); color: var(--nt-verde-900); }
+
+/* ---------- Zona principal ---------- */
+.principal { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.barra {
+  height: 56px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; border-bottom: 1px solid #e2e5d8;
+}
+.migas { font-size: 12.5px; color: var(--nt-verde-500); font-weight: 600; }
+.barra-der { display: flex; align-items: center; gap: 18px; }
+.demo { font-size: 12.5px; color: var(--nt-verde-500); font-weight: 600; }
+.campana { background: none; border: 0; color: var(--nt-verde-900); padding: 4px; cursor: pointer; }
+.contenido { padding: 24px 28px 32px; width: 100%; }
+
+@media (max-width: 860px) {
+  .shell { flex-direction: column; }
+  .menu { width: 100%; height: auto; position: static; }
+  .menu-pie { margin-top: 16px; }
+}

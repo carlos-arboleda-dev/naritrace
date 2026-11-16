@@ -1,1 +1,60 @@
-<p>dashboard works!</p>
+<div class="shell">
+  <aside class="menu">
+    <a class="marca" routerLink="/dashboard/resumen">
+      <span class="marca-logo"><nt-icon name="logo" [size]="18" /></span>
+      <span class="marca-nombre">NariTrace</span>
+    </a>
+
+    <div class="espacio">
+      <span class="etiqueta">ESPACIO DE TRABAJO</span>
+      @if (finca(); as f) {
+        <strong>{{ f.nombre }}</strong>
+        <small>{{ f.municipio }}, {{ f.departamento }}</small>
+      } @else {
+        <strong>Sin finca registrada</strong>
+        <small><a routerLink="/dashboard/fincas/nueva">Registrar mi finca</a></small>
+      }
+    </div>
+
+    <nav class="nav">
+      <a routerLink="/dashboard/resumen" routerLinkActive="activo"><nt-icon name="resumen" /> Resumen</a>
+      <a routerLink="/dashboard/lotes" routerLinkActive="activo"><nt-icon name="lotes" /> Mis lotes</a>
+      <a routerLink="/dashboard/fincas" routerLinkActive="activo"><nt-icon name="finca" /> Mi finca</a>
+      <a routerLink="/dashboard/movimientos" routerLinkActive="activo"><nt-icon name="movimientos" /> Movimientos</a>
+      <a routerLink="/dashboard/documentos" routerLinkActive="activo"><nt-icon name="documentos" /> Documentos</a>
+      @if (esAdmin()) {
+        <a routerLink="/dashboard/admin" routerLinkActive="activo"><nt-icon name="admin" /> Panel admin</a>
+      }
+    </nav>
+
+    <div class="menu-pie">
+      <a class="enlace-suave" href="javascript:void(0)">Centro de ayuda</a>
+      <a class="enlace-suave" href="javascript:void(0)">Configuración</a>
+      <div class="usuario">
+        <span class="avatar">{{ iniciales() }}</span>
+        <span class="usuario-datos">
+          <strong>{{ nombre() }}</strong>
+          <small>{{ usuario()?.rol_display }}</small>
+        </span>
+        <button type="button" class="salir" (click)="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <nt-icon name="logout" [size]="16" />
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="barra">
+      <span class="migas">{{ usuario()?.rol_display ?? 'Productor' }} / {{ seccion() }}</span>
+      <span class="barra-der">
+        <span class="demo">Datos de demostración</span>
+        <button type="button" class="campana" aria-label="Notificaciones"><nt-icon name="bell" /></button>
+        <span class="avatar avatar-claro">{{ iniciales() }}</span>
+      </span>
+    </header>
+
+    <main class="contenido">
+      <router-outlet />
+    </main>
+  </div>
+</div>

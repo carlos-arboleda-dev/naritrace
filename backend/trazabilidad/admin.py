@@ -45,3 +45,12 @@ class CertificacionAdmin(admin.ModelAdmin):
     list_filter = ('tipo', 'activa', 'entidad_certificadora')
     search_fields = ('numero_certificado', 'entidad_certificadora')
     ordering = ('-fecha_emision',)
+
+from .models import ConsultaPublica
+
+
+@admin.register(ConsultaPublica)
+class ConsultaPublicaAdmin(admin.ModelAdmin):
+    list_display = ('lote', 'fecha')
+    list_filter = ('fecha',)
+    search_fields = ('lote__codigo',)

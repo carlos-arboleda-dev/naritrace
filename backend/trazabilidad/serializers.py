@@ -108,11 +108,21 @@ class LoteListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'codigo', 'producto', 'producto_nombre',
             'productor', 'productor_nombre', 'finca', 'finca_nombre',
-            'cantidad', 'unidad', 'fecha_cosecha',
+            'variedad', 'cantidad', 'unidad', 'fecha_cosecha',
+            'proceso', 'notas_produccion',
             'estado', 'estado_display', 'total_movimientos',
             'fecha_creacion'
         ]
-        read_only_fields = ['productor', 'codigo', 'fecha_creacion']
+        # El estado solo cambia con la acción /publicar/, nunca por edición directa
+        read_only_fields = ['productor', 'codigo', 'estado', 'fecha_creacion']
+
+    def validate_finca(self, finca):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated and getattr(user, 'rol', None) == 'productor' \
+                and finca.productor_id != user.id:
+            raise serializers.ValidationError('Esa finca no pertenece a tu cuenta.')
+        return finca
 
 
 class LoteDetailSerializer(serializers.ModelSerializer):
@@ -149,6 +159,12 @@ class LoteDetailSerializer(serializers.ModelSerializer):
 # ============================================
 # TRAZABILIDAD PÚBLICA (lo que ve el cliente al escanear QR)
 # ============================================
+class CertificacionPublicaSerializer(CertificacionSerializer):
+    """Certificación sin el archivo adjunto (los documentos son privados)."""
+    class Meta(CertificacionSerializer.Meta):
+        fields = [f for f in CertificacionSerializer.Meta.fields if f != 'documento']
+
+
 class TrazabilidadPublicaSerializer(serializers.ModelSerializer):
     """
     Información pública que se muestra al escanear un QR.
@@ -158,7 +174,7 @@ class TrazabilidadPublicaSerializer(serializers.ModelSerializer):
     productor = serializers.SerializerMethodField()
     finca = serializers.SerializerMethodField()
     linea_tiempo = serializers.SerializerMethodField()
-    certificaciones = CertificacionSerializer(many=True, read_only=True)
+    certificaciones = CertificacionPublicaSerializer(many=True, read_only=True)
 
     class Meta:
         model = Lote
@@ -182,8 +198,7 @@ class TrazabilidadPublicaSerializer(serializers.ModelSerializer):
             'municipio': obj.finca.municipio,
             'vereda': obj.finca.vereda,
             'departamento': obj.finca.departamento,
-            'latitud': str(obj.finca.latitud) if obj.finca.latitud else None,
-            'longitud': str(obj.finca.longitud) if obj.finca.longitud else None,
+            # Las coordenadas exactas son privadas: no se publican.
         }
 
     def get_linea_tiempo(self, obj):

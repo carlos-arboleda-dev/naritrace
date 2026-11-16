@@ -1,0 +1,168 @@
+<section class="resumen">
+  <!-- Encabezado -->
+  <header class="encabezado">
+    <div>
+      <h1>{{ saludo() }}</h1>
+      <p class="sub">Así va la historia de tu finca.@if (actualizado()) { Última actualización: {{ actualizado() }}. }</p>
+    </div>
+    <a class="btn-principal" routerLink="/dashboard/lotes/nuevo">Registrar lote <nt-icon name="plus" [size]="16" /></a>
+  </header>
+
+  @if (error()) { <div class="aviso-error">{{ error() }}</div> }
+
+  <!-- Indicadores -->
+  @if (stats(); as s) {
+    <div class="kpis">
+      <article class="tarjeta kpi">
+        <div class="kpi-top"><span>Lotes registrados</span><nt-icon name="box" [size]="16" /></div>
+        <strong>{{ s.lotes_registrados }}</strong>
+        <small>{{ plural(s.nuevos_este_mes, 'nuevo', 'nuevos') }} este mes</small>
+      </article>
+      <article class="tarjeta kpi">
+        <div class="kpi-top"><span>Lotes disponibles</span><nt-icon name="warehouse" [size]="16" /></div>
+        <strong>{{ s.lotes_disponibles }}</strong>
+        <small>{{ s.lotes_en_transito }} en tránsito · {{ plural(s.lotes_borrador, 'borrador', 'borradores') }}</small>
+      </article>
+      <article class="tarjeta kpi">
+        <div class="kpi-top"><span>Movimientos registrados</span><nt-icon name="shuffle" [size]="16" /></div>
+        <strong>{{ s.movimientos_registrados }}</strong>
+        <small>{{ plural(s.movimientos_lote_destacado, 'evento', 'eventos') }} en el lote destacado</small>
+      </article>
+      <article class="tarjeta kpi">
+        <div class="kpi-top"><span>Consultas QR (30 días)</span><nt-icon name="scan" [size]="16" /></div>
+        <strong>{{ s.consultas_30d }}</strong>
+        <small>{{ plural(s.consultas_semana, 'consulta', 'consultas') }} esta semana</small>
+      </article>
+    </div>
+
+    <!-- Gráfico + borrador -->
+    <div class="fila-medio">
+      <article class="tarjeta grafico">
+        <div class="titulo-fila">
+          <h2>Consultas públicas de tus lotes</h2>
+          <span class="rango">{{ s.consultas_rango }}</span>
+        </div>
+        <div class="barras" role="img" aria-label="Consultas públicas por mes">
+          @for (b of barras(); track b.mes) {
+            <div class="barra-col">
+              <span class="barra-valor">{{ b.total }}</span>
+              <div class="barra" [class.ultima]="b.ultima" [style.height.%]="b.alto"></div>
+              <span class="barra-mes">{{ b.mes }}</span>
+            </div>
+          }
+        </div>
+        <small class="nota">Consultas mensuales · No representan compradores únicos.</small>
+      </article>
+
+      <article class="tarjeta continua">
+        <div class="titulo-fila">
+          <h2>Continúa donde quedaste</h2>
+          <nt-icon name="clipboard" [size]="16" />
+        </div>
+        @if (s.borrador_pendiente; as b) {
+          <span class="pildora">{{ plural(s.lotes_borrador, 'borrador pendiente', 'borradores pendientes') }}</span>
+          <h3>{{ b.producto }}@if (b.mes_cosecha) { · Cosecha de {{ b.mes_cosecha }} }</h3>
+          <p>Completa la cantidad y confirma la ubicación para generar su código de trazabilidad.</p>
+          <a class="btn-borde" routerLink="/dashboard/lotes/nuevo" [queryParams]="{ borrador: b.id }">Continuar registro <nt-icon name="arrow-right" [size]="15" /></a>
+        } @else {
+          <h3>Todo al día</h3>
+          <p>No tienes borradores pendientes. Cuando quieras, registra un nuevo lote.</p>
+          <a class="btn-borde" routerLink="/dashboard/lotes/nuevo">Registrar lote <nt-icon name="plus" [size]="15" /></a>
+        }
+      </article>
+    </div>
+  } @else if (!error()) {
+    <div class="cargando">Cargando tu resumen…</div>
+  }
+
+  <!-- Mis lotes -->
+  <article class="tarjeta lotes">
+    <div class="titulo-fila">
+      <div>
+        <h2>Mis lotes</h2>
+        <p class="sub-verde">Todo el origen, en un registro organizado.</p>
+      </div>
+      <button type="button" class="btn-borde" (click)="exportar()">Exportar <nt-icon name="download" [size]="15" /></button>
+    </div>
+
+    <div class="filtros">
+      <label class="campo campo-buscar">
+        <span>Buscar lote</span>
+        <span class="input-icono">
+          <input type="text" placeholder="Busca por código o producto" [value]="busqueda()"
+                 (input)="alBuscar($any($event.target).value)" />
+          <nt-icon name="search" [size]="15" />
+        </span>
+      </label>
+      <label class="campo">
+        <span>Estado</span>
+        <span class="input-icono">
+          <select (change)="alFiltrar('estado', $any($event.target).value)">
+            <option value="">Todos los estados</option>
+            <option value="publicado">Disponible</option>
+            <option value="en_transito">En tránsito</option>
+            <option value="borrador">Borrador</option>
+            <option value="entregado">Entregado</option>
+            <option value="archivado">Archivado</option>
+          </select>
+          <nt-icon name="chevron" [size]="15" />
+        </span>
+      </label>
+      <label class="campo">
+        <span>Producto</span>
+        <span class="input-icono">
+          <select (change)="alFiltrar('producto', $any($event.target).value)">
+            <option value="">Todos los productos</option>
+            @for (p of productos(); track p.id) { <option [value]="p.id">{{ p.nombre }}</option> }
+          </select>
+          <nt-icon name="chevron" [size]="15" />
+        </span>
+      </label>
+    </div>
+
+    <div class="tabla-scroll">
+      <table class="tabla">
+        <thead>
+          <tr><th>LOTE / PRODUCTO</th><th>CANTIDAD</th><th>COSECHA</th><th>ESTADO</th><th>EVENTOS</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (l of pagina()?.results ?? []; track l.id) {
+            <tr>
+              <td>
+                <div class="celda-lote">
+                  <span class="caja-icono"><nt-icon name="box" [size]="16" /></span>
+                  <div><strong>{{ codigo(l) }}</strong><small>{{ l.producto_nombre }}</small></div>
+                </div>
+              </td>
+              <td>{{ cantidad(l) }}</td>
+              <td>{{ fecha(l.fecha_cosecha) }}</td>
+              <td><span class="estado" [class]="'estado estado-' + l.estado">{{ etiquetaEstado(l.estado) }}</span></td>
+              <td>{{ eventos(l) }}</td>
+              <td class="acc"><a [routerLink]="['/dashboard/lotes', l.id]" [attr.aria-label]="'Ver lote ' + l.codigo"><nt-icon name="arrow-up-right" [size]="14" /></a></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="vacio">
+              @if (cargando()) { Cargando lotes… } @else { No se encontraron lotes con esos filtros. }
+            </td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pie-tabla">
+      <span>Mostrando {{ pagina()?.results?.length ?? 0 }} de {{ pagina()?.count ?? 0 }} lotes</span>
+      <nav class="paginador" aria-label="Paginación">
+        <button type="button" (click)="irAPagina(numeroPagina() - 1)" [disabled]="numeroPagina() === 1">Anterior</button>
+        @for (n of paginas(); track n) {
+          <button type="button" class="num" [class.activa]="n === numeroPagina()" (click)="irAPagina(n)">{{ n }}</button>
+        }
+        <button type="button" (click)="irAPagina(numeroPagina() + 1)" [disabled]="numeroPagina() === totalPaginas()">Siguiente</button>
+      </nav>
+    </footer>
+  </article>
+
+  <div class="aviso-demo">
+    <nt-icon name="info" [size]="15" />
+    <span>Los lotes y movimientos de esta cuenta son datos de demostración. Su publicación no acredita una certificación oficial.</span>
+  </div>
+</section>

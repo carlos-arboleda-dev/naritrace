@@ -176,3 +176,6 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:4200',
     cast=Csv()
 )
+
+# URL pública del frontend (se usa para armar el enlace del QR de cada lote)
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:4200').rstrip('/')

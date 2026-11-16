@@ -4,7 +4,9 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProductoViewSet, FincaViewSet,
     LoteViewSet, MovimientoViewSet,
-    CertificacionViewSet, TrazabilidadPublicaViewSet,EstadisticasAdminView
+    CertificacionViewSet, TrazabilidadPublicaViewSet, 
+    EstadisticasAdminView,
+    MeView,
 )
 
 router = DefaultRouter()
@@ -21,5 +23,6 @@ public_router.register(r'trazabilidad', TrazabilidadPublicaViewSet, basename='tr
 urlpatterns = [
     path('', include(router.urls)),
     path('publico/', include(public_router.urls)),
-    path('estadisticas/', EstadisticasAdminView.as_view(), name='estadisticas_admin'),
+    path('estadisticas/', EstadisticasAdminView.as_view(), name='estadisticas'),
+    path('me/', MeView.as_view(), name='me'),
 ]

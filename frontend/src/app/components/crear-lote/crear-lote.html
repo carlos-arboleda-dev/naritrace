@@ -1,81 +1,283 @@
-<div class="p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Registrar Nuevo Lote</h2>
-    <a routerLink="/dashboard/lotes" class="btn btn-outline-secondary">Volver</a>
-  </div>
+<section class="lote">
+  <!-- Encabezado -->
+  <header>
+    <span class="migas">{{ paso() === 4 ? 'REGISTRO COMPLETADO' : 'MIS LOTES / NUEVO LOTE' }}</span>
+    <h1>{{ paso() === 4 ? 'Lote registrado' : 'Registrar un nuevo lote' }}</h1>
+    <p class="sub">
+      @if (paso() === 4) { El origen está listo. Continúa construyendo el recorrido. }
+      @else { Documenta el origen y genera una etiqueta para compartir su historia. }
+    </p>
+  </header>
 
-  <div class="card shadow-sm p-4 border-0" style="max-width: 800px;">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label class="form-label fw-bold text-muted small">Producto *</label>
-          <select formControlName="producto" class="form-select">
-            <option value="">Seleccione un producto</option>
-            <option *ngFor="let p of productos" [value]="p.id">{{ p.nombre }}</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-bold text-muted small">Finca de Origen *</label>
-          <select formControlName="finca" class="form-select">
-            <option value="">Seleccione una finca</option>
-            <option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }} - {{ f.municipio }}</option>
-          </select>
-        </div>
-      </div>
+  <!-- Pasos -->
+  <ol class="pasos">
+    @for (p of [{n: 1, t: 'Datos del lote'}, {n: 2, t: 'Origen y ubicación'}, {n: 3, t: 'Revisión y publicación'}]; track p.n) {
+      <li [class]="'paso ' + estadoPaso(p.n)">
+        <span class="paso-num">
+          @if (estadoPaso(p.n) === 'hecho') { <nt-icon name="check" [size]="14" /> } @else { {{ p.n }} }
+        </span>
+        <span class="paso-txt">
+          <small>{{ estadoPaso(p.n) === 'hecho' ? 'COMPLETADO' : estadoPaso(p.n) === 'actual' ? 'PASO ACTUAL' : 'PENDIENTE' }}</small>
+          <strong>{{ p.t }}</strong>
+        </span>
+      </li>
+    }
+  </ol>
 
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label class="form-label fw-bold text-muted small">Variedad</label>
-          <input type="text" formControlName="variedad" class="form-control" placeholder="Ej: Castillo">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label fw-bold text-muted small">Cantidad *</label>
-          <input type="number" formControlName="cantidad" class="form-control">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label fw-bold text-muted small">Unidad</label>
-          <select formControlName="unidad" class="form-select">
-            <option value="kg">Kilogramos</option>
-            <option value="lb">Libras</option>
-            <option value="unidades">Unidades</option>
-          </select>
-        </div>
-      </div>
+  @if (paso() !== 4) {
+    <div class="cuerpo">
+      <!-- ===== Columna principal ===== -->
+      <form class="tarjeta principal" [formGroup]="form" (ngSubmit)="continuar()" novalidate>
 
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label class="form-label fw-bold text-muted small">Fecha de Cosecha *</label>
-          <!-- El formato YYYY-MM-DD lo maneja bien el navegador -->
-          <input type="date" formControlName="fecha_cosecha" class="form-control">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-bold text-muted small">Proceso</label>
-          <input type="text" formControlName="proceso" class="form-control" placeholder="Ej: Lavado, Secado">
-        </div>
-      </div>
+        <!-- PASO 1 -->
+        @if (paso() === 1) {
+          <h2>Cuéntanos sobre tu producto</h2>
+          <p class="nota-verde">Los campos con * son obligatorios.</p>
 
-      <div class="mb-4">
-        <label class="form-label fw-bold text-muted small">Notas de producción (Opcional)</label>
-        <textarea formControlName="notas_produccion" class="form-control" rows="3"></textarea>
-      </div>
+          <div class="fila dos">
+            <label class="campo" [class.malo]="invalido('producto')">
+              <span>Producto *</span>
+              <span class="caja"><select formControlName="producto">
+                <option value="">Selecciona un producto</option>
+                @for (p of productos(); track p.id) { <option [value]="p.id">{{ p.nombre }}</option> }
+              </select><nt-icon name="chevron" [size]="15" /></span>
+              @if (invalido('producto')) { <em>Elige un producto.</em> }
+            </label>
 
-      <div *ngIf="error" class="alert alert-danger small">{{ error }}</div>
+            <label class="campo" [class.malo]="invalido('variedadSel')">
+              <span>Variedad *</span>
+              @if (opcionesVariedad().length) {
+                <span class="caja"><select formControlName="variedadSel">
+                  <option value="">Selecciona una variedad</option>
+                  @for (o of opcionesVariedad(); track o) { <option [value]="o">{{ o }}</option> }
+                  <option [value]="OTRA">Otra…</option>
+                </select><nt-icon name="chevron" [size]="15" /></span>
+                @if (v().variedadSel === OTRA) {
+                  <span class="caja"><input type="text" formControlName="variedadOtra" placeholder="Escribe la variedad" /></span>
+                }
+              } @else {
+                <span class="caja"><input type="text" placeholder="Ej: Castillo"
+                  [value]="v().variedadOtra ?? ''" (input)="form.patchValue({ variedadSel: '__otra__', variedadOtra: $any($event.target).value })" /></span>
+              }
+              @if (invalido('variedadSel')) { <em>Indica la variedad.</em> }
+            </label>
+          </div>
 
-      <button type="submit" class="btn btn-success px-4" [disabled]="enviando">
-        {{ enviando ? 'Guardando...' : 'Guardar Lote' }}
-      </button>
-    </form>
+          <div class="fila tres">
+            <label class="campo" [class.malo]="invalido('cantidad')">
+              <span>Cantidad del lote *</span>
+              <span class="caja"><input type="number" min="0" step="any" formControlName="cantidad" placeholder="0" /></span>
+              @if (invalido('cantidad')) { <em>Ingresa una cantidad mayor a 0.</em> }
+            </label>
+            <label class="campo">
+              <span>Unidad *</span>
+              <span class="caja"><select formControlName="unidad">
+                @for (u of unidades; track u.valor) { <option [value]="u.valor">{{ u.texto }}</option> }
+              </select><nt-icon name="chevron" [size]="15" /></span>
+            </label>
+            <label class="campo" [class.malo]="invalido('fecha_cosecha')">
+              <span>Fecha de cosecha *</span>
+              <span class="caja"><input type="date" formControlName="fecha_cosecha" /></span>
+              @if (invalido('fecha_cosecha')) { <em>Elige la fecha.</em> }
+            </label>
+          </div>
+          @if (hintCantidad()) { <p class="nota-verde pegada">{{ hintCantidad() }}</p> }
 
-    <!-- Errores visuales -->
-    <div *ngIf="form.invalid && (form.dirty || form.touched)" class="alert alert-warning mt-3 small">
-      <strong>Revisa los siguientes campos:</strong>
-      <ul class="mb-0">
-        <li *ngIf="form.get('producto')?.invalid">Selecciona un producto</li>
-        <li *ngIf="form.get('finca')?.invalid">Selecciona una finca</li>
-        <li *ngIf="form.get('cantidad')?.invalid">La cantidad debe ser mayor a 0</li>
-        <li *ngIf="form.get('fecha_cosecha')?.invalid">Selecciona la fecha de cosecha</li>
-      </ul>
+          <div class="fila dos">
+            <label class="campo">
+              <span>Proceso</span>
+              <span class="caja"><select formControlName="proceso">
+                <option value="">Sin especificar</option>
+                @for (p of procesos; track p) { <option [value]="p">{{ p }}</option> }
+              </select><nt-icon name="chevron" [size]="15" /></span>
+            </label>
+            <label class="campo" [class.malo]="invalido('finca')">
+              <span>Origen</span>
+              <span class="caja"><select formControlName="finca">
+                <option value="">Selecciona tu finca</option>
+                @for (f of fincas(); track f.id) { <option [value]="f.id">{{ f.nombre }}</option> }
+              </select><nt-icon name="chevron" [size]="15" /></span>
+              @if (invalido('finca')) {
+                <em>Necesitas una finca. <a routerLink="/dashboard/fincas/nueva">Registrar finca</a></em>
+              }
+            </label>
+          </div>
+
+          <label class="campo">
+            <span>Notas de producción</span>
+            <span class="caja"><input type="text" formControlName="notas_produccion" placeholder="Ej: 480 kg de cereza → 96 kg de pergamino seco" /></span>
+          </label>
+          <p class="nota-verde">Información declarada por el productor.</p>
+        }
+
+        <!-- PASO 2 -->
+        @if (paso() === 2) {
+          <h2>Ubica el origen de tu lote</h2>
+          <p class="nota-verde">Selecciona tu finca y confirma el área de producción. La ubicación exacta permanece privada.</p>
+
+          <div class="fila dos">
+            <label class="campo" [class.malo]="invalido('finca')">
+              <span>Finca *</span>
+              <span class="caja"><select formControlName="finca">
+                <option value="">Selecciona tu finca</option>
+                @for (f of fincas(); track f.id) { <option [value]="f.id">{{ nombreCorto(f.nombre) }}</option> }
+              </select><nt-icon name="chevron" [size]="15" /></span>
+              @if (invalido('finca')) { <em>Elige una finca.</em> }
+            </label>
+            <label class="campo">
+              <span>Vereda *</span>
+              <span class="caja"><input type="text" [value]="fincaSel()?.vereda || 'No registrada'" readonly /></span>
+            </label>
+          </div>
+
+          <div class="mapa" role="img" aria-label="Mapa ilustrativo de la finca">
+            <svg viewBox="0 0 560 215" preserveAspectRatio="xMidYMid slice">
+              <g fill="none" stroke="#bfe7cf" stroke-width="1">
+                <path d="M0 40 C90 20 150 70 250 45 S430 10 560 50"/>
+                <path d="M0 72 C100 50 160 100 260 76 S440 40 560 82"/>
+                <path d="M0 104 C110 82 170 132 270 108 S450 72 560 114"/>
+                <path d="M0 140 C120 118 180 168 280 144 S460 108 560 150"/>
+                <path d="M0 176 C130 154 190 204 290 180 S470 144 560 186"/>
+              </g>
+              <path d="M95 0 L150 62 L560 60" fill="none" stroke="#9fdcbd" stroke-width="9" stroke-linejoin="round" opacity=".8"/>
+              <path d="M0 150 C120 130 300 95 560 70" fill="none" stroke="#9fdcbd" stroke-width="9" opacity=".8"/>
+              <path d="M310 118 L340 215" fill="none" stroke="#9fdcbd" stroke-width="9" opacity=".8"/>
+              <polygon points="150,62 318,46 372,112 238,148 135,118" fill="#83deb1" fill-opacity=".55" stroke="#0a5a3e" stroke-width="1.6"/>
+              <circle cx="240" cy="97" r="13" fill="#074832"/>
+              <g transform="translate(231 88)" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M9 14s5-4.4 5-8.4a5 5 0 0 0-10 0c0 4 5 8.4 5 8.4Z"/><circle cx="9" cy="5.6" r="1.7"/></g>
+              <rect x="206" y="112" width="68" height="20" rx="6" fill="#f5f2e7" stroke="#d9dccb"/>
+              <text x="240" y="126" text-anchor="middle" font-size="10" font-weight="600" fill="#0b3d2b" font-family="Manrope, sans-serif">{{ nombreFinca() || 'Tu finca' }}</text>
+              <text x="12" y="26" font-size="9" font-weight="700" fill="#09714e" font-family="Manrope, sans-serif">VEREDA {{ (fincaSel()?.vereda || 'sin registrar').toUpperCase() }} · {{ (fincaSel()?.municipio || '').toUpperCase() }}</text>
+              <line x1="12" y1="196" x2="62" y2="196" stroke="#074832" stroke-width="2"/>
+              <text x="70" y="199" font-size="8.5" fill="#3b6954" font-family="Manrope, sans-serif">100 m · Área ilustrativa</text>
+            </svg>
+          </div>
+
+          <div class="fila tres">
+            <label class="campo"><span>Latitud</span><span class="caja"><input type="text" [value]="latitudTexto()" readonly /></span></label>
+            <label class="campo"><span>Longitud</span><span class="caja"><input type="text" [value]="longitudTexto()" readonly /></span></label>
+            <label class="campo"><span>Área de producción</span><span class="caja"><input type="text" [value]="areaTexto()" readonly /></span></label>
+          </div>
+
+          <div class="aviso"><nt-icon name="info" [size]="15" />
+            <span>Mapa ilustrativo de la finca. En la vista pública solo se comparte el municipio y una ubicación aproximada.</span></div>
+        }
+
+        <!-- PASO 3 -->
+        @if (paso() === 3) {
+          <h2>Revisa antes de publicar</h2>
+          <p class="nota-verde">Este registro será la base de la historia pública del lote. Los movimientos se añaden después.</p>
+
+          <div class="resumen-lote">
+            <div>
+              <strong>{{ productoTexto() }} · {{ cantidadTexto() }}</strong>
+              <p>Cosecha: {{ fechaTexto() }}@if (v().proceso) { · Proceso {{ minusculas(v().proceso ?? '') }} }</p>
+              <p>{{ nombreFinca() }}@if (fincaSel()?.vereda) { · Vereda {{ fincaSel()?.vereda }} } · {{ ubicacion() }}</p>
+            </div>
+            <button type="button" class="enlace" (click)="irA(1)">Editar datos</button>
+          </div>
+
+          <h3>Información que se compartirá</h3>
+          <ul class="publica">
+            <li><nt-icon name="eye" [size]="16" /><span>Producto, cantidad y fecha</span><b class="etq">Público</b></li>
+            <li><nt-icon name="eye" [size]="16" /><span>Municipio y nombre de la finca</span><b class="etq">Público</b></li>
+            <li><nt-icon name="eye" [size]="16" /><span>Nombre del productor</span><b class="etq">Público</b></li>
+            <li><nt-icon name="lock" [size]="16" /><span>Coordenadas y documentos</span><b class="etq oscuro">Privado</b></li>
+          </ul>
+
+          <label class="confirmo" [class.malo]="intentado() && !v().confirmo">
+            <input type="checkbox" formControlName="confirmo" />
+            <span>Confirmo que la información es correcta y autorizo la publicación de los datos indicados como públicos.</span>
+          </label>
+          @if (intentado() && !v().confirmo) { <p class="error-linea">Marca la casilla para poder publicar.</p> }
+
+          <div class="aviso"><nt-icon name="info" [size]="15" />
+            <span>Publicar un lote no implica verificación ni certificación oficial. Los datos son declarados por la persona responsable.</span></div>
+        }
+      </form>
+
+      <!-- ===== Resumen lateral ===== -->
+      <aside class="tarjeta lateral">
+        <h2>Tu lote, de un vistazo</h2>
+        <span class="etq">Borrador · Sin publicar</span>
+        <dl>
+          <dt>Producto</dt><dd>{{ productoTexto() }}</dd>
+          <dt>Cantidad</dt><dd>{{ cantidadTexto() }}</dd>
+          <dt>Cosecha</dt><dd>{{ fechaTexto() }}</dd>
+          <dt>Finca</dt><dd>{{ nombreFinca() || '—' }}</dd>
+          <dt>Ubicación</dt><dd>{{ ubicacion() }}</dd>
+          <dt>Responsable</dt><dd>{{ responsable() }}</dd>
+        </dl>
+        <p class="nota-verde">El código y el QR se generan al publicar. Puedes guardar y continuar después.</p>
+      </aside>
     </div>
-  </div>
-</div>
+
+    @if (error()) { <div class="aviso malo-aviso" role="alert">{{ error() }}</div> }
+    @if (mensaje()) { <div class="aviso" role="status"><nt-icon name="check" [size]="15" /><span>{{ mensaje() }}</span></div> }
+
+    <!-- Acciones -->
+    <div class="acciones">
+      <div class="izq">
+        @if (paso() === 1) { <button type="button" class="btn-borde" (click)="cancelar()">Cancelar</button> }
+        @else { <button type="button" class="btn-borde" (click)="anterior()">Anterior</button> }
+        <button type="button" class="enlace" (click)="guardarBorrador()" [disabled]="guardando()">Guardar borrador</button>
+      </div>
+      <button type="button" class="btn-principal" (click)="continuar()" [disabled]="guardando()">
+        {{ guardando() ? 'Guardando…' : paso() === 3 ? 'Publicar y generar QR' : 'Guardar y continuar' }}
+        <nt-icon name="arrow-right" [size]="15" />
+      </button>
+    </div>
+    <p class="pie">Tus cambios se conservan al continuar. Datos ficticios para demostración.</p>
+  }
+
+  <!-- ===== PASO 4: éxito ===== -->
+  @if (paso() === 4 && publicado(); as r) {
+    <div class="exito">
+      <span class="exito-icono"><nt-icon name="check" [size]="20" /></span>
+      <div>
+        <strong>Tu lote ya tiene una historia para compartir</strong>
+        <p>Código generado: {{ r.codigo }} · {{ nombreFinca() }}, {{ fincaSel()?.municipio }}</p>
+      </div>
+    </div>
+
+    <div class="cuerpo-exito">
+      <article class="tarjeta etiqueta">
+        <small class="conoce">CONOCE EL ORIGEN DE ESTE {{ (productoSel()?.categoria_display || 'LOTE').toUpperCase() }}</small>
+        <qrcode [qrdata]="r.qr_codigo" [width]="150" [margin]="1" colorDark="#074832" colorLight="#f5f2e7" [errorCorrectionLevel]="'M'" />
+        <h3>{{ productoSel()?.categoria_display || productoSel()?.nombre }} · {{ fincaSel()?.nombre }}</h3>
+        <p class="cod">{{ r.codigo }} · {{ ubicacion().split(',')[0] }}, {{ fincaSel()?.departamento }}</p>
+        <span class="etq">QR de demostración</span>
+        <button type="button" class="btn-principal ancho" (click)="imprimirEtiqueta()">Descargar etiqueta PDF <nt-icon name="download" [size]="15" /></button>
+        <small class="nota-verde">Etiqueta conceptual. Escanéala para abrir la vista pública.</small>
+      </article>
+
+      <article class="tarjeta publicado">
+        <div class="titulo-fila"><h2>Lote publicado</h2><span class="etq">Registrado</span></div>
+        <p class="detalle">{{ cantidadTexto() }} de {{ minusculas(productoSel()?.nombre ?? '') }}@if (variedad()) { · Variedad {{ variedad() }} }<br />
+          Cosecha del {{ fechaTexto() }}@if (v().proceso) { · Proceso {{ minusculas(v().proceso ?? '') }} }</p>
+
+        <div class="sep"></div>
+        <span class="rotulo">Enlace público</span>
+        <div class="enlace-caja"><input type="text" [value]="enlace()" readonly aria-label="Enlace público" />
+          <button type="button" (click)="copiarEnlace()" aria-label="Copiar enlace"><nt-icon name="copy" [size]="15" /></button></div>
+        <div class="botones">
+          <button type="button" class="btn-borde" (click)="copiarEnlace()">{{ copiado() ? '¡Copiado!' : 'Copiar enlace' }} <nt-icon name="copy" [size]="14" /></button>
+          <a class="btn-borde" [href]="enlace()" target="_blank" rel="noopener">Ver vista pública <nt-icon name="external" [size]="14" /></a>
+        </div>
+
+        <div class="sep"></div>
+        <h3>¿Qué sigue?</h3>
+        <p class="nota-verde">Añade el beneficio, el secado y la salida a acopio. Cada nuevo evento ampliará la línea de tiempo de este lote.</p>
+        <a class="btn-principal" [routerLink]="['/dashboard/lotes', r.lote.id]">Registrar primer evento <nt-icon name="plus" [size]="15" /></a>
+      </article>
+    </div>
+
+    <div class="aviso"><nt-icon name="info" [size]="15" />
+      <span>Registro conceptual creado por {{ responsable() }}. El QR y el enlace son de demostración; la información no está certificada oficialmente.</span></div>
+
+    <div class="acciones">
+      <a class="btn-borde" routerLink="/dashboard/lotes">Volver a mis lotes</a>
+      <button type="button" class="enlace" (click)="registrarOtro()">Registrar otro lote →</button>
+    </div>
+  }
+</section>

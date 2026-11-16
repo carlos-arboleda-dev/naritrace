@@ -1,1 +1,29 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales de NariTrace (se cargan después de Bootstrap) */
+:root {
+  --nt-verde-900: #074832;
+  --nt-verde-700: #09714e;
+  --nt-verde-500: #2f8f66;
+  --nt-menta: #83deb1;
+  --nt-menta-100: #d8ecd9;
+  --nt-menta-50: #dfeedc;
+  --nt-crema: #f5f2e7;
+  --nt-borde: #d9dccb;
+  --nt-texto: #0b3d2b;
+  --nt-texto-suave: #3b6954;
+  --nt-radio: 12px;
+}
+
+body {
+  font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--nt-crema);
+  color: var(--nt-texto);
+}
+
+/* "Descargar etiqueta PDF": al imprimir solo se muestra la etiqueta del lote */
+@media print {
+  body.imprimiendo-etiqueta * { visibility: hidden; }
+  body.imprimiendo-etiqueta .etiqueta, body.imprimiendo-etiqueta .etiqueta * { visibility: visible; }
+  body.imprimiendo-etiqueta .etiqueta { position: absolute; left: 0; top: 0; width: 100%; border: 0; }
+  body.imprimiendo-etiqueta .etiqueta .btn-principal,
+  body.imprimiendo-etiqueta .etiqueta .nota-verde { display: none; }
+}

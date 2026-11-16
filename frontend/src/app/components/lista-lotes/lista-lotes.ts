@@ -23,7 +23,7 @@ import { ApiService, Lote } from '../../services/api';
         <div class="col-md-4 mb-3" *ngFor="let lote of lotes">
           <div class="card shadow-sm h-100 border-0">
             <div class="card-body">
-              <h5 class="card-title text-success fw-bold">{{ lote.codigo }}</h5>
+              <h5 class="card-title text-success fw-bold">{{ lote.codigo || 'Borrador sin código' }}</h5>
               <p class="card-text mb-1"><strong>{{ lote.producto_nombre }}</strong></p>
               <p class="card-text mb-1 text-muted">Finca: {{ lote.finca_nombre }}</p>
               <p class="card-text mb-3">{{ lote.cantidad }} {{ lote.unidad }}</p>

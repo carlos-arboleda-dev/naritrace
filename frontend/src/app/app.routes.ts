@@ -10,6 +10,8 @@ import { LandingComponent } from './components/landing/landing';
 import { RegistroComponent } from './components/registro/registro';
 import { CrearFincaComponent } from './components/crear-finca/crear-finca';
 import { AdminPanelComponent } from './components/admin-panel/admin-panel';
+import { ResumenComponent } from './components/resumen/resumen';
+import { ProximamenteComponent } from './components/proximamente/proximamente';
 
 
 export const routes: Routes = [
@@ -24,12 +26,15 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     children: [
-      { path: '', redirectTo: 'lotes', pathMatch: 'full' },
+      { path: '', redirectTo: 'resumen', pathMatch: 'full' },
+      { path: 'resumen', component: ResumenComponent },
       { path: 'lotes', component: ListaLotesComponent },
       { path: 'lotes/nuevo', component: CrearLoteComponent },
       { path: 'lotes/:id', component: DetalleLoteComponent },
       { path: 'fincas', component: ListaFincasComponent },
       { path: 'fincas/nueva', component: CrearFincaComponent },
+      { path: 'movimientos', component: ProximamenteComponent, data: { titulo: 'Movimientos' } },
+      { path: 'documentos', component: ProximamenteComponent, data: { titulo: 'Documentos' } },
       { path: 'admin', component: AdminPanelComponent }
     ]
   },

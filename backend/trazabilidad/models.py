@@ -122,8 +122,11 @@ class Lote(models.Model):
         codigo = models.CharField(
             max_length=50,
             unique=True,
+            null=True,
+            blank=True,
             editable=False,
             verbose_name="Código único",
+            help_text="Se genera al publicar el lote. Los borradores no tienen código.",
         )
         uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
 
@@ -188,22 +191,29 @@ class Lote(models.Model):
         fecha_creacion = models.DateTimeField(auto_now_add=True)
         fecha_publicacion = models.DateTimeField(null=True, blank=True)
 
-        def save(self, *args, **kwargs):
-            # Generar código único si no existe
-            if not self.codigo:
+        def _generar_codigo(self):
+            """Código legible: NT-AAMMDD-NNN (fecha de cosecha + consecutivo del día)."""
+            fecha = self.fecha_cosecha
+            if not hasattr(fecha, 'strftime'):
                 from django.utils import timezone
-                year = timezone.now().year
-                short_uuid = str(self.uuid)[:6].upper()
-                self.codigo = f"NT-{year}-{short_uuid}"
+                fecha = timezone.localdate()
+            prefijo = f"NT-{fecha:%y%m%d}-"
+            usados = Lote.objects.filter(codigo__startswith=prefijo).values_list('codigo', flat=True)
+            consecutivos = [int(c[len(prefijo):]) for c in usados if c[len(prefijo):].isdigit()]
+            return f"{prefijo}{max(consecutivos, default=0) + 1:03d}"
 
-            # Generar URL del QR
-            if not self.qr_codigo and self.codigo:
-                self.qr_codigo = f"http://localhost:4200/trazabilidad/{self.codigo}"
-
-
+        def save(self, *args, **kwargs):
+            # El código y el QR solo existen una vez que el lote deja de ser borrador
+            if self.estado != self.Estado.BORRADOR:
+                if not self.codigo:
+                    self.codigo = self._generar_codigo()
+                if not self.qr_codigo:
+                    self.qr_codigo = f"{settings.FRONTEND_URL}/trazabilidad/{self.codigo}"
             super().save(*args, **kwargs)
 
         def __str__(self):
+            if not self.codigo:
+                return f"Borrador #{self.pk} — {self.producto.nombre}"
             return f"{self.codigo} — {self.producto.nombre}"
 
         class Meta:
@@ -339,4 +349,25 @@ class Certificacion(models.Model):
             verbose_name_plural = "Certificaciones"
             ordering = ['-fecha_emision']
 
-            
+
+class ConsultaPublica(models.Model):
+    """
+    Registro de cada consulta pública (escaneo de QR) de un lote.
+    Alimenta el gráfico "Consultas públicas" del resumen del productor.
+    No guarda datos personales del consultante.
+    """
+    lote = models.ForeignKey(
+        Lote,
+        on_delete=models.CASCADE,
+        related_name='consultas',
+        verbose_name="Lote",
+    )
+    fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    def __str__(self):
+        return f"Consulta {self.lote.codigo} — {self.fecha:%Y-%m-%d %H:%M}"
+
+    class Meta:
+        verbose_name = "Consulta pública"
+        verbose_name_plural = "Consultas públicas"
+        ordering = ['-fecha']
