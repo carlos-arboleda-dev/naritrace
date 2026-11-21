@@ -37,11 +37,15 @@ export interface FiltrosLotes {
 
 export interface Usuario {
   id: number;
+  codigo?: string;
   username: string;
   first_name: string;
   last_name: string;
   rol: string;
   rol_display: string;
+  municipio?: string;
+  verificado?: boolean;
+  solicitud?: { rol_solicitado: string; rol_solicitado_display: string; estado: string; nota: string } | null;
 }
 
 export interface Producto {

@@ -5,7 +5,8 @@ export type NtIcon =
   | 'bell' | 'plus' | 'search' | 'chevron' | 'arrow-up-right' | 'arrow-right'
   | 'download' | 'scan' | 'box' | 'warehouse' | 'shuffle' | 'clipboard'
   | 'info' | 'logout' | 'admin' | 'check' | 'eye' | 'lock' | 'calendar' | 'copy'
-  | 'external' | 'pin' | 'close';
+  | 'external' | 'pin' | 'close' | 'users' | 'shield' | 'inbox' | 'clock' | 'truck'
+  | 'alert' | 'link' | 'refresh' | 'package-in' | 'package-out' | 'flag';
 
 /** Íconos de trazo (24x24) usados en todo el panel del productor. */
 @Component({
@@ -44,6 +45,17 @@ export type NtIcon =
         @case ('external') { <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/> }
         @case ('pin') { <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/> }
         @case ('close') { <path d="M6 6l12 12M18 6 6 18"/> }
+        @case ('users') { <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/> }
+        @case ('shield') { <path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/> }
+        @case ('inbox') { <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6l3.5-7Z"/> }
+        @case ('clock') { <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/> }
+        @case ('truck') { <path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/> }
+        @case ('alert') { <path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/> }
+        @case ('link') { <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/> }
+        @case ('refresh') { <path d="M21 12a9 9 0 0 1-15.5 6.2M3 12a9 9 0 0 1 15.5-6.2"/><path d="M21 4v5h-5M3 20v-5h5"/> }
+        @case ('package-in') { <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 21v-8M9 16l3 3 3-3"/> }
+        @case ('package-out') { <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8M9 18l3-3 3 3"/> }
+        @case ('flag') { <path d="M5 21V4M5 4h12l-2 4 2 4H5"/> }
         @case ('admin') { <path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/> }
       }
     </svg>

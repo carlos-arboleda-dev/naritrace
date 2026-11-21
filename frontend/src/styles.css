@@ -27,3 +27,76 @@ body {
   body.imprimiendo-etiqueta .etiqueta .btn-principal,
   body.imprimiendo-etiqueta .etiqueta .nota-verde { display: none; }
 }
+
+/* =====================================================================
+   Piezas compartidas por los paneles (administrador, distribuidor…)
+   ===================================================================== */
+.nt-pagina { display: flex; flex-direction: column; gap: 16px; font-size: 14px; }
+.nt-encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.nt-titulo { font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -.4px; color: var(--nt-texto); }
+.nt-sub { margin: 4px 0 0; color: var(--nt-verde-500); font-size: 13px; }
+.nt-tarjeta { background: var(--nt-crema); border: 1px solid var(--nt-borde); border-radius: var(--nt-radio); padding: 18px; }
+.nt-h2 { font-size: 16px; font-weight: 800; margin: 0; color: var(--nt-texto); }
+.nt-fila { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.nt-nota { color: var(--nt-verde-500); font-size: 12px; margin: 0; }
+.nt-grid-2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 14px; }
+.nt-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.nt-grid-eq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.nt-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.nt-kpi { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+.nt-kpi-top { display: flex; justify-content: space-between; align-items: center; color: var(--nt-verde-500); font-size: 12.5px; font-weight: 600; }
+.nt-kpi strong { font-size: 30px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+.nt-kpi small { color: var(--nt-verde-500); font-size: 12px; }
+
+.nt-btn-oscuro, .nt-btn-borde { font: inherit; font-weight: 700; font-size: 13px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.nt-btn-oscuro { background: var(--nt-verde-900); color: #fff; border: 0; padding: 11px 18px; }
+.nt-btn-oscuro:hover:not(:disabled) { background: var(--nt-verde-700); color: #fff; }
+.nt-btn-borde { background: transparent; color: var(--nt-verde-900); border: 1.5px solid var(--nt-verde-900); padding: 8px 16px; }
+.nt-btn-borde:hover:not(:disabled) { background: var(--nt-verde-900); color: #fff; }
+.nt-btn-oscuro:disabled, .nt-btn-borde:disabled { opacity: .55; cursor: default; }
+.nt-enlace { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; font-size: 12.5px; color: var(--nt-verde-700); cursor: pointer; text-decoration: none; }
+.nt-enlace:hover { text-decoration: underline; }
+
+.nt-pildora { display: inline-block; background: var(--nt-menta); color: var(--nt-verde-900); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+.nt-estado { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 11px; border-radius: 6px; background: var(--nt-menta); color: var(--nt-verde-900); white-space: nowrap; }
+.nt-estado.oscuro { background: var(--nt-verde-900); color: #fff; }
+.nt-estado.gris { background: #e4e2d6; color: #6b6f63; }
+.nt-estado.rojo { background: #f6d6d1; color: #8a2a1f; }
+.nt-estado.ambar { background: #f7e4b4; color: #7a5300; }
+
+.nt-campo { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; margin: 0; }
+.nt-caja { position: relative; display: block; font-weight: 500; }
+.nt-caja > nt-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--nt-texto-suave); pointer-events: none; }
+.nt-caja input, .nt-caja select { width: 100%; appearance: none; background: var(--nt-crema); border: 1px solid var(--nt-borde); border-radius: 9px; padding: 10px 34px 10px 12px; font: inherit; font-size: 13px; color: var(--nt-texto); min-height: 42px; }
+.nt-caja input:focus, .nt-caja select:focus { outline: 2px solid var(--nt-menta); border-color: var(--nt-verde-500); }
+
+.nt-tabla-scroll { overflow-x: auto; margin: 0 -18px; }
+.nt-tabla { width: 100%; border-collapse: collapse; min-width: 640px; }
+.nt-tabla th { background: var(--nt-menta-50); color: var(--nt-verde-500); font-size: 10.5px; letter-spacing: .06em; font-weight: 700; text-align: left; padding: 10px 18px; text-transform: uppercase; }
+.nt-tabla td { padding: 12px 18px; border-bottom: 1px solid var(--nt-borde); font-size: 13px; vertical-align: middle; }
+.nt-tabla tbody tr:last-child td { border-bottom: 0; }
+.nt-tabla a, .nt-verde { color: var(--nt-verde-700); text-decoration: none; }
+.nt-vacio { text-align: center; color: var(--nt-verde-500); padding: 28px 0 !important; }
+.nt-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 12px; }
+
+.nt-aviso { display: flex; align-items: flex-start; gap: 10px; background: var(--nt-menta-100); color: var(--nt-texto-suave); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; }
+.nt-aviso.error { background: #fbe3df; color: #8a2a1f; }
+.nt-aviso nt-icon { flex: none; margin-top: 1px; }
+
+.nt-barras { display: flex; align-items: flex-end; justify-content: space-around; gap: 14px; height: 170px; margin: 14px 8px 6px; }
+.nt-barra-col { flex: 1; max-width: 62px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; text-align: center; }
+.nt-barra-valor { font-size: 11px; color: var(--nt-texto-suave); margin-bottom: 4px; }
+.nt-barra { background: var(--nt-menta); border-radius: 5px 5px 0 0; min-height: 4px; transition: height .3s; }
+.nt-barra.ultima { background: var(--nt-verde-900); }
+.nt-barra-mes { font-size: 11.5px; margin-top: 8px; }
+
+.nt-hbar { display: grid; grid-template-columns: 74px 1fr 34px; align-items: center; gap: 10px; font-size: 12.5px; }
+.nt-hbar .pista { height: 11px; background: var(--nt-menta-100); border-radius: 6px; overflow: hidden; }
+.nt-hbar .relleno { display: block; height: 100%; background: var(--nt-verde-700); border-radius: 6px; transition: width .3s; }
+.nt-hbar b { text-align: right; }
+
+@media (max-width: 1000px) {
+  .nt-kpis { grid-template-columns: repeat(2, 1fr); }
+  .nt-grid-2, .nt-grid-3, .nt-grid-eq { grid-template-columns: 1fr; }
+}

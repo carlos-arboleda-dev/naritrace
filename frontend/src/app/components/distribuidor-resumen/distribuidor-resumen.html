@@ -1,0 +1,129 @@
+<section class="nt-pagina">
+  <header>
+    <h1 class="nt-titulo">{{ saludo() }}</h1>
+    <p class="nt-sub">Tu operación en la cadena de trazabilidad.@if (sesion.usuario()?.municipio) { {{ sesion.usuario()?.rol_display }} · {{ sesion.usuario()?.municipio }}. }</p>
+  </header>
+
+  @if (error()) { <div class="nt-aviso error">{{ error() }}</div> }
+
+  <!-- Operación rápida -->
+  <article class="operacion">
+    <div class="op-cab">
+      <div><h2>Operación rápida</h2><p>Escribe o pega el código del lote (o el enlace de su QR) para recibirlo, despacharlo o entregarlo.</p></div>
+      <span class="chip-sello"><nt-icon name="link" [size]="14" /> Cada operación se sella en la cadena</span>
+    </div>
+    <form class="buscador" (submit)="$event.preventDefault(); buscar()">
+      <span class="campo-cod"><nt-icon name="scan" [size]="18" />
+        <input type="text" placeholder="NT-260918-001" [value]="codigo()" (input)="codigo.set($any($event.target).value)" aria-label="Código del lote" /></span>
+      <button type="submit" class="btn-ambar" [disabled]="buscando() || !codigo().trim()">{{ buscando() ? 'Buscando…' : 'Buscar lote' }}</button>
+      @if (lote()) { <button type="button" class="btn-fantasma" (click)="limpiar()">Limpiar</button> }
+    </form>
+
+    @if (errorBusqueda() && !lote()) { <p class="op-error">{{ errorBusqueda() }}</p> }
+    @if (exito()) { <p class="op-exito"><nt-icon name="check" [size]="15" /> {{ exito() }}</p> }
+
+    @if (lote(); as l) {
+      <div class="ficha">
+        <div class="ficha-datos">
+          <div class="ficha-tit"><strong>{{ l.codigo }}</strong>
+            <span class="est" [class.transito]="l.estado === 'en_transito'">{{ etiquetaEstado(l.estado) }}</span>
+            @if (l.integridad.valida) { <span class="sello ok"><nt-icon name="shield" [size]="13" /> Sello íntegro</span> }
+            @else if (!l.integridad.sellado) { <span class="sello sin"><nt-icon name="info" [size]="13" /> Sin sellar</span> }
+            @else { <span class="sello mal"><nt-icon name="alert" [size]="13" /> Datos alterados</span> }
+          </div>
+          <p>{{ l.producto }}@if (l.variedad) { · {{ l.variedad }} } · {{ l.cantidad }} {{ l.unidad }}</p>
+          <p class="suave">Productor: {{ l.productor }} · {{ l.municipio }}<br />Custodio actual: {{ l.custodio || 'Sin asignar' }}</p>
+          <button type="button" class="enlace-claro" (click)="verPublica(l.codigo)">Ver vista pública <nt-icon name="external" [size]="13" /></button>
+        </div>
+        <ol class="mini-tiempo">
+          @for (m of l.linea_tiempo.slice(-4); track m.id) {
+            <li><b>{{ m.tipo_display }}</b><span>{{ m.actor }} · {{ fechaCorta(m.fecha) }}</span></li>
+          } @empty { <li class="suave">Aún sin eventos.</li> }
+        </ol>
+      </div>
+
+      @if (l.acciones.length) {
+        <div class="acciones">
+          @for (a of l.acciones; track a) {
+            <button type="button" class="btn-accion" [class.activa]="accion() === a" (click)="elegir(a)">
+              <nt-icon [name]="a === 'recibir' ? 'package-in' : a === 'despachar' ? 'truck' : 'flag'" [size]="16" /> {{ texto(a).titulo }}</button>
+          }
+        </div>
+      } @else { <p class="suave sin-acc">No tienes operaciones disponibles para este lote en su estado actual.</p> }
+
+      @if (accion(); as a) {
+        <form class="form-op" (submit)="$event.preventDefault(); confirmar()">
+          @if (a === 'despachar') {
+            <label>Tipo de envío<select (change)="tipoEnvio.set($any($event.target).value)"><option value="transporte">Transporte</option><option value="distribucion">Distribución a punto de venta</option></select></label>
+          }
+          @if (a !== 'recibir') {
+            <label>{{ textos[a].pide }} *<input type="text" [value]="destino()" (input)="destino.set($any($event.target).value)" placeholder="Ej: Cafetería Andina, Cali" /></label>
+          }
+          <label class="ancho">Notas (opcional)<input type="text" [value]="descripcion()" (input)="descripcion.set($any($event.target).value)" placeholder="Estado del empaque, vehículo, observaciones…" /></label>
+          <button type="submit" class="btn-ambar" [disabled]="enviando()">{{ enviando() ? 'Registrando…' : textos[a].boton }}</button>
+          <button type="button" class="btn-fantasma" (click)="accion.set(null)">Cancelar</button>
+        </form>
+        @if (errorBusqueda()) { <p class="op-error">{{ errorBusqueda() }}</p> }
+      }
+    }
+  </article>
+
+  @if (d(); as r) {
+    <!-- Indicadores -->
+    <div class="nt-kpis">
+      <article class="nt-tarjeta nt-kpi"><div class="nt-kpi-top"><span>En custodia</span><nt-icon name="warehouse" [size]="16" /></div>
+        <strong>{{ r.en_custodia }}</strong><small>{{ r.recibidos_30d }} recibidos en 30 días</small></article>
+      <article class="nt-tarjeta nt-kpi"><div class="nt-kpi-top"><span>En tránsito</span><nt-icon name="truck" [size]="16" /></div>
+        <strong>{{ r.en_transito }}</strong><small>{{ r.despachados_30d }} despachados en 30 días</small></article>
+      <article class="nt-tarjeta nt-kpi"><div class="nt-kpi-top"><span>Por recibir</span><nt-icon name="package-in" [size]="16" /></div>
+        <strong>{{ r.por_recibir }}</strong><small>Lotes disponibles en la red</small></article>
+      <article class="nt-tarjeta nt-kpi"><div class="nt-kpi-top"><span>Entregas (30 días)</span><nt-icon name="flag" [size]="16" /></div>
+        <strong>{{ r.entregados_30d }}</strong><small>Cierre de la cadena</small></article>
+    </div>
+
+    <!-- Tablero por etapas -->
+    <div class="tablero">
+      @for (col of [{t: 'Por recibir', k: 'lista_por_recibir', v: 'por_recibir'}, {t: 'En mi custodia', k: 'lista_en_custodia', v: 'custodia'}, {t: 'En tránsito', k: 'lista_en_transito', v: 'transito'}]; track col.k) {
+        <article class="nt-tarjeta col">
+          <div class="nt-fila"><h2 class="nt-h2">{{ col.t }}</h2><button type="button" class="nt-enlace" (click)="verMas(col.v)">Ver todos →</button></div>
+          <ul>
+            @for (x of r[col.k]; track x.id) {
+              <li><button type="button" (click)="buscar(x.codigo)"><strong>{{ x.codigo }}</strong><span>{{ x.producto }} · {{ x.cantidad }} {{ x.unidad }}</span><small>{{ x.municipio }}</small></button></li>
+            } @empty { <li class="vacio">Sin lotes en esta etapa.</li> }
+          </ul>
+        </article>
+      }
+    </div>
+
+    <div class="nt-grid-2 inv">
+      <article class="nt-tarjeta">
+        <div class="nt-fila"><h2 class="nt-h2">Tu actividad reciente</h2><a class="nt-enlace" routerLink="/dashboard/historial">Ver historial →</a></div>
+        <ul class="actividad">
+          @for (m of r.actividad; track m.id) {
+            <li><span class="punto"></span><div><strong>{{ m.tipo_display }} · {{ m.codigo }}</strong>
+              <span>{{ m.producto }}@if (m.destino) { → {{ m.destino }} } · {{ fechaCorta(m.fecha) }}</span></div></li>
+          } @empty { <li class="vacio">Todavía no has registrado operaciones.</li> }
+        </ul>
+      </article>
+      <div class="lado">
+        <article class="nt-tarjeta">
+          <h2 class="nt-h2">Operaciones por semana</h2>
+          <div class="nt-barras" role="img" aria-label="Operaciones por semana">
+            @for (b of semanas(); track b.etiqueta) {
+              <div class="nt-barra-col"><span class="nt-barra-valor">{{ b.n }}</span><div class="nt-barra" [class.ultima]="b.ultima" [style.height.%]="b.alto"></div><span class="nt-barra-mes">{{ b.etiqueta }}</span></div>
+            }
+          </div>
+        </article>
+        <article class="nt-tarjeta">
+          <div class="nt-fila"><h2 class="nt-h2">Requiere atención</h2><nt-icon name="alert" [size]="16" /></div>
+          <ul class="alertas">
+            @for (a of r.alertas; track a.texto) { <li><span class="nt-estado" [class.ambar]="a.nivel === 'media'" [class.gris]="a.nivel === 'baja'">{{ a.nivel === 'media' ? 'Media' : 'Info' }}</span><span>{{ a.texto }}</span></li>
+            } @empty { <li class="nt-nota">Todo al día. No hay pendientes.</li> }
+          </ul>
+        </article>
+      </div>
+    </div>
+  } @else if (!error()) { <p class="nt-nota">Cargando tu panel…</p> }
+
+  <div class="nt-aviso"><nt-icon name="info" [size]="15" /><span>Los datos de esta cuenta son de demostración. Cada recepción, despacho y entrega queda registrada de forma inmutable y no acredita una certificación oficial.</span></div>
+</section>

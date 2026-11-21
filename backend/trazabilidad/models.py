@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from datetime import timezone as dt_timezone
 import uuid
 
 
@@ -14,6 +16,10 @@ class Producto(models.Model):
     class Categoria(models.TextChoices):
         CAFE = 'cafe', 'Café'
         CACAO = 'cacao', 'Cacao'
+        PALMA = 'palma', 'Palma de aceite'
+        LEGUMINOSAS = 'leguminosas', 'Leguminosas'
+        TUBERCULOS = 'tuberculos', 'Tubérculos'
+        HORTALIZAS = 'hortalizas', 'Hortalizas'
         ACUICULTURA = 'acuicultura', 'Acuicultura'
         FRUTAS = 'frutas', 'Frutas'
         PANCOGER = 'pancoger', 'Pancoger'
@@ -184,12 +190,62 @@ class Lote(models.Model):
             max_length=255,
             blank=True,
             verbose_name="Hash en blockchain",
-            help_text="Hash del registro en Hyperledger Fabric",
+            help_text="Huella SHA-256 del bloque que sella este lote en el registro encadenado",
+        )
+
+        # Quién tiene el lote en este momento (productor → distribuidor → …)
+        custodio = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            null=True,
+            blank=True,
+            on_delete=models.SET_NULL,
+            related_name='lotes_en_custodia',
+            verbose_name="Custodio actual",
         )
 
         # Fechas
         fecha_creacion = models.DateTimeField(auto_now_add=True)
         fecha_publicacion = models.DateTimeField(null=True, blank=True)
+
+        @property
+        def protegido(self):
+            """True cuando el lote ya quedó sellado en el registro encadenado."""
+            return bool(self.hash_blockchain)
+
+        def contenido_inmutable(self):
+            """Datos declarados que se sellan al publicar. El estado y el custodio NO van aquí
+            porque cambian legítimamente a lo largo de la cadena."""
+            fp = self.fecha_publicacion
+            return {
+                'tipo': 'lote',
+                'id': self.pk,
+                'codigo': self.codigo,
+                'uuid': str(self.uuid),
+                'producto_id': self.producto_id,
+                'finca_id': self.finca_id,
+                'productor_id': self.productor_id,
+                'variedad': self.variedad,
+                'cantidad': f"{self.cantidad:.3f}" if self.cantidad is not None else None,
+                'unidad': self.unidad,
+                'fecha_cosecha': self.fecha_cosecha.isoformat() if hasattr(self.fecha_cosecha, 'isoformat') else str(self.fecha_cosecha),
+                'proceso': self.proceso,
+                'notas_produccion': self.notas_produccion,
+                'fecha_publicacion': fp.astimezone(dt_timezone.utc).isoformat() if fp else None,
+            }
+
+        def _verificar_no_alterado(self):
+            """Impide modificar los datos sellados de un lote ya publicado."""
+            from .ledger import hash_contenido
+            bloque = BloqueLedger.objects.filter(tipo='lote', referencia=str(self.pk)).first()
+            if bloque and hash_contenido(self.contenido_inmutable()) != bloque.hash_contenido:
+                raise ValidationError(
+                    "Este lote ya fue publicado y sellado: sus datos declarados no se pueden modificar."
+                )
+
+        def delete(self, *args, **kwargs):
+            if self.estado != self.Estado.BORRADOR:
+                raise ValidationError("Un lote publicado no se puede eliminar (queda en el registro encadenado).")
+            return super().delete(*args, **kwargs)
 
         def _generar_codigo(self):
             """Código legible: NT-AAMMDD-NNN (fecha de cosecha + consecutivo del día)."""
@@ -204,6 +260,8 @@ class Lote(models.Model):
 
         def save(self, *args, **kwargs):
             # El código y el QR solo existen una vez que el lote deja de ser borrador
+            if self.pk and self.hash_blockchain:
+                self._verificar_no_alterado()
             if self.estado != self.Estado.BORRADOR:
                 if not self.codigo:
                     self.codigo = self._generar_codigo()
@@ -276,6 +334,32 @@ class Movimiento(models.Model):
         )
 
         fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha del movimiento")
+
+        def contenido_inmutable(self):
+            f = self.fecha
+            return {
+                'tipo': 'movimiento',
+                'id': self.pk,
+                'lote_id': self.lote_id,
+                'lote_codigo': self.lote.codigo,
+                'tipo_movimiento': self.tipo,
+                'actor_id': self.actor_id,
+                'origen': self.origen,
+                'destino': self.destino,
+                'descripcion': self.descripcion,
+                'latitud': f"{self.latitud:.6f}" if self.latitud is not None else None,
+                'longitud': f"{self.longitud:.6f}" if self.longitud is not None else None,
+                'fecha': f.astimezone(dt_timezone.utc).isoformat() if f else None,
+            }
+
+        def save(self, *args, **kwargs):
+            if not self._state.adding:
+                # Solo se permite completar el hash la primera vez (lo hace el servicio con update())
+                raise ValidationError("Los movimientos son inmutables: no se pueden editar.")
+            super().save(*args, **kwargs)
+
+        def delete(self, *args, **kwargs):
+            raise ValidationError("Los movimientos son inmutables: no se pueden eliminar.")
 
         def __str__(self):
             return f"{self.get_tipo_display()} — {self.lote.codigo}"
@@ -370,4 +454,86 @@ class ConsultaPublica(models.Model):
     class Meta:
         verbose_name = "Consulta pública"
         verbose_name_plural = "Consultas públicas"
+        ordering = ['-fecha']
+
+
+# ============================================
+# REGISTRO ENCADENADO (inmutabilidad) Y AUDITORÍA
+# ============================================
+class BloqueLedger(models.Model):
+    """
+    Bloque de un registro de solo-añadir. Cada bloque guarda el hash del anterior,
+    así que cambiar o borrar cualquier dato histórico rompe la cadena y se detecta.
+    """
+
+    class TipoBloque(models.TextChoices):
+        LOTE = 'lote', 'Publicación de lote'
+        MOVIMIENTO = 'movimiento', 'Movimiento'
+
+    indice = models.PositiveIntegerField(unique=True)
+    tipo = models.CharField(max_length=12, choices=TipoBloque.choices)
+    referencia = models.CharField(max_length=20, help_text="ID del lote o movimiento sellado")
+    lote_id = models.PositiveIntegerField(db_index=True)
+    contenido = models.JSONField()
+    hash_contenido = models.CharField(max_length=64)
+    hash_anterior = models.CharField(max_length=64)
+    hash = models.CharField(max_length=64, unique=True)
+    fecha = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Los bloques del registro no se pueden modificar.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Los bloques del registro no se pueden eliminar.")
+
+    def __str__(self):
+        return f"#{self.indice} {self.tipo} {self.hash[:10]}…"
+
+    class Meta:
+        verbose_name = "Bloque del registro"
+        verbose_name_plural = "Registro encadenado"
+        ordering = ['indice']
+        indexes = [models.Index(fields=['tipo', 'referencia'])]
+
+
+class EventoAuditoria(models.Model):
+    """Bitácora de solo lectura: quién hizo qué y cuándo."""
+
+    class Resultado(models.TextChoices):
+        COMPLETADO = 'completado', 'Completado'
+        RECHAZADO = 'rechazado', 'Rechazado'
+
+    fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='eventos_auditoria',
+    )
+    usuario_texto = models.CharField(max_length=150, blank=True, help_text="'Sistema' si no hubo usuario")
+    accion = models.CharField(max_length=80)
+    recurso = models.CharField(max_length=120, blank=True)
+    detalle = models.CharField(max_length=250, blank=True)
+    resultado = models.CharField(max_length=12, choices=Resultado.choices, default=Resultado.COMPLETADO)
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("La bitácora es de solo lectura.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("La bitácora es de solo lectura.")
+
+    @property
+    def nombre_usuario(self):
+        if self.usuario:
+            return self.usuario.nombre_completo
+        return self.usuario_texto or 'Sistema'
+
+    def __str__(self):
+        return f"{self.fecha:%Y-%m-%d %H:%M} {self.nombre_usuario} — {self.accion}"
+
+    class Meta:
+        verbose_name = "Evento de auditoría"
+        verbose_name_plural = "Auditoría"
         ordering = ['-fecha']

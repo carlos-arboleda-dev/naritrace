@@ -20,3 +20,12 @@ class UsuarioAdmin(UserAdmin):
             'fields': ('rol', 'telefono', 'municipio', 'verificado'),
         }),
     )
+
+
+from .models import SolicitudRol
+
+
+@admin.register(SolicitudRol)
+class SolicitudRolAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'rol_solicitado', 'estado', 'fecha_solicitud')
+    list_filter = ('estado', 'rol_solicitado')

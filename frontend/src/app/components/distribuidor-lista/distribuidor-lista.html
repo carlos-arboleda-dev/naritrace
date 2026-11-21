@@ -1,0 +1,37 @@
+<section class="nt-pagina">
+  <header>
+    <h1 class="nt-titulo">{{ titulo() }}</h1>
+    <p class="nt-sub">{{ modo === 'inventario' ? 'Los lotes que recibes, tienes en custodia, despachas o entregaste.' : 'Todas las operaciones que has registrado. Son inmutables.' }}</p>
+  </header>
+  @if (error()) { <div class="nt-aviso error">{{ error() }}</div> }
+
+  <article class="nt-tarjeta">
+    @if (modo === 'inventario') {
+      <div class="pestanas" role="tablist">
+        @for (p of pestanas; track p.v) { <button type="button" role="tab" [class.on]="vista() === p.v" (click)="cambiarVista(p.v)">{{ p.t }}</button> }
+      </div>
+      <label class="nt-campo busq"><span>Buscar</span><span class="nt-caja"><input type="text" placeholder="Código, producto o municipio" (input)="alBuscar($any($event.target).value)" /><nt-icon name="search" [size]="15" /></span></label>
+      <div class="nt-tabla-scroll"><table class="nt-tabla">
+        <thead><tr><th>Lote</th><th>Cantidad</th><th>Origen</th><th>Custodio</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          @for (l of filas(); track l.id) {
+            <tr><td><strong>{{ l.codigo }}</strong><br /><small class="nt-nota">{{ l.producto }}@if (l.variedad) { · {{ l.variedad }} }</small></td>
+              <td>{{ l.cantidad }} {{ l.unidad }}</td><td>{{ l.municipio }}<br /><small class="nt-nota">{{ l.productor }}</small></td><td>{{ l.custodio || '—' }}</td>
+              <td><span class="nt-estado" [class.ambar]="l.estado === 'en_transito'" [class.gris]="l.estado === 'entregado'">{{ l.estado === 'publicado' ? 'En custodia' : l.estado_display }}</span></td>
+              <td class="der">@for (a of l.acciones; track a) { <button type="button" class="nt-btn-borde chico" (click)="operar(l.codigo)">{{ etiqueta(a) }}</button> } @empty { <button type="button" class="nt-enlace" (click)="operar(l.codigo)">Ver ficha →</button> }</td></tr>
+          } @empty { <tr><td colspan="6" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay lotes en esta etapa.' }}</td></tr> }
+        </tbody></table></div>
+    } @else {
+      <label class="nt-campo busq"><span>Tipo de operación</span><span class="nt-caja"><select (change)="cambiarTipo($any($event.target).value)">
+        <option value="">Todas</option><option value="acopio">Recepción</option><option value="transporte">Transporte</option><option value="distribucion">Distribución</option><option value="entrega">Entrega</option></select><nt-icon name="chevron" [size]="15" /></span></label>
+      <div class="nt-tabla-scroll"><table class="nt-tabla">
+        <thead><tr><th>Fecha / hora</th><th>Operación</th><th>Lote</th><th>Origen → destino</th><th>Sello</th></tr></thead>
+        <tbody>
+          @for (m of filas(); track m.id) {
+            <tr><td>{{ fechaCorta(m.fecha) }}</td><td><strong>{{ m.tipo_display }}</strong></td><td>{{ m.codigo }}<br /><small class="nt-nota">{{ m.producto }}</small></td>
+              <td>{{ m.origen || '—' }} → {{ m.destino || '—' }}</td><td class="nt-mono">{{ m.hash ? m.hash.slice(0, 10) + '…' : '—' }}</td></tr>
+          } @empty { <tr><td colspan="5" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'Aún no has registrado operaciones.' }}</td></tr> }
+        </tbody></table></div>
+    }
+  </article>
+</section>

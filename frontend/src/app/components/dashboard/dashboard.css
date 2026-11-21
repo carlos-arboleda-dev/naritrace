@@ -60,3 +60,11 @@
   .menu { width: 100%; height: auto; position: static; }
   .menu-pie { margin-top: 16px; }
 }
+
+/* Tema propio del panel de operaciones (distribuidor / acopiador / transportador) */
+.tema-dist {
+  --nt-verde-900: #0c3c45; --nt-verde-700: #14687a; --nt-verde-500: #2f8a99;
+  --nt-menta: #8fd8e3; --nt-menta-100: #d6ecf0; --nt-menta-50: #dcedf0;
+  --nt-texto: #0a2f36; --nt-texto-suave: #3a6670; --nt-borde: #d3dccf;
+  --nt-acento: #f2b84b;
+}

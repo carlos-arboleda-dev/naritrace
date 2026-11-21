@@ -1,0 +1,106 @@
+<section class="nt-pagina">
+  <header class="nt-encabezado">
+    <div><h1 class="nt-titulo">{{ titulo.t }}</h1><p class="nt-sub">{{ titulo.s }}</p></div>
+    @if (vista !== 'auditoria') { <button type="button" class="nt-btn-borde" (click)="exportar()" [disabled]="!filas().length">Exportar <nt-icon name="download" [size]="15" /></button> }
+  </header>
+
+  @if (error()) { <div class="nt-aviso error">{{ error() }}</div> }
+  @if (mensaje()) { <div class="nt-aviso"><nt-icon name="check" [size]="15" /><span>{{ mensaje() }}</span></div> }
+
+  <article class="nt-tarjeta">
+    @if (vista !== 'municipios') {
+      <div class="barra">
+        <label class="nt-campo"><span>Buscar</span><span class="nt-caja"><input type="text" placeholder="Nombre, código o municipio" (input)="alBuscar($any($event.target).value)" /><nt-icon name="search" [size]="15" /></span></label>
+        @if (vista === 'lotes') {
+          <label class="nt-campo"><span>Estado</span><span class="nt-caja"><select (change)="alFiltrar($any($event.target).value)">
+            <option value="">Todos</option><option value="publicado">Disponible</option><option value="en_transito">En tránsito</option><option value="entregado">Entregado</option></select><nt-icon name="chevron" [size]="15" /></span></label>
+        }
+        @if (vista === 'solicitudes') {
+          <label class="nt-campo"><span>Estado</span><span class="nt-caja"><select (change)="alFiltrar($any($event.target).value)">
+            <option value="pendiente">Pendientes</option><option value="aprobada">Aprobadas</option><option value="rechazada">Rechazadas</option><option value="todas">Todas</option></select><nt-icon name="chevron" [size]="15" /></span></label>
+        }
+        @if (vista === 'auditoria') {
+          <label class="nt-campo"><span>Acción</span><span class="nt-caja"><select (change)="alFiltrarAccion($any($event.target).value)">
+            <option value="">Todas las acciones</option>@for (a of acciones(); track a) { <option [value]="a">{{ a }}</option> }</select><nt-icon name="chevron" [size]="15" /></span></label>
+          <label class="nt-campo"><span>Resultado</span><span class="nt-caja"><select (change)="alFiltrar($any($event.target).value)">
+            <option value="">Todos</option><option value="completado">Completado</option><option value="rechazado">Rechazado</option></select><nt-icon name="chevron" [size]="15" /></span></label>
+        }
+      </div>
+    }
+
+    <div class="nt-tabla-scroll">
+      <table class="nt-tabla">
+        @switch (vista) {
+          @case ('productores') {
+            <thead><tr><th>Productor</th><th>Municipio</th><th>Fincas</th><th>Lotes</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (p of filas(); track p.id) {
+                <tr><td><strong>{{ p.nombre }}</strong><br /><small class="nt-nota">{{ p.codigo }} · {{ p.username }}</small></td>
+                  <td>{{ p.municipio || '—' }}</td><td>{{ p.fincas }}</td><td>{{ p.lotes }}</td>
+                  <td><span class="nt-estado" [class.gris]="!p.verificado">{{ p.verificado ? 'Verificado' : 'Sin verificar' }}</span></td>
+                  <td class="der"><button type="button" class="nt-btn-borde chico" (click)="alternarVerificado(p)" [disabled]="ocupado() === p.id">{{ p.verificado ? 'Retirar sello' : 'Verificar' }}</button></td></tr>
+              } @empty { <tr><td colspan="6" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay productores.' }}</td></tr> }
+            </tbody>
+          }
+          @case ('lotes') {
+            <thead><tr><th>Lote</th><th>Productor</th><th>Municipio</th><th>Estado</th><th>Eventos</th><th>Sello</th><th></th></tr></thead>
+            <tbody>
+              @for (l of filas(); track l.id) {
+                <tr><td><strong>{{ l.codigo }}</strong><br /><small class="nt-nota">{{ l.producto }} · {{ l.cantidad }} {{ l.unidad }}</small></td>
+                  <td>{{ l.productor }}</td><td>{{ l.municipio }}</td>
+                  <td><span class="nt-estado" [class.oscuro]="l.estado === 'en_transito'" [class.gris]="l.estado === 'entregado'">{{ l.estado === 'publicado' ? 'Disponible' : l.estado_display }}</span></td>
+                  <td>{{ l.eventos }}</td>
+                  <td class="nt-mono">{{ l.hash ? l.hash.slice(0, 10) + '…' : '—' }}</td>
+                  <td class="der">
+                    @if (verificaciones()[l.id]; as v) { <span class="nt-estado" [class.rojo]="!v.valida" [title]="v.texto">{{ v.valida ? 'Íntegro' : 'ALTERADO' }}</span> }
+                    @else { <button type="button" class="nt-btn-borde chico" (click)="verificarLote(l)" [disabled]="ocupado() === l.id">Verificar</button> }
+                  </td></tr>
+              } @empty { <tr><td colspan="7" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay lotes con esos filtros.' }}</td></tr> }
+            </tbody>
+          }
+          @case ('municipios') {
+            <thead><tr><th>Municipio</th><th>Productores</th><th>Fincas</th><th>Lotes</th><th>Eventos</th><th>Geolocalizadas</th></tr></thead>
+            <tbody>
+              @for (m of filas(); track m.municipio) {
+                <tr><td><strong>{{ m.municipio }}</strong><br /><small class="nt-nota">{{ m.departamento }}</small></td><td>{{ m.productores }}</td><td>{{ m.fincas }}</td><td>{{ m.lotes }}</td><td>{{ m.eventos }}</td>
+                  <td><span class="medidor"><i [style.width.%]="m.pct_geo"></i></span> <b>{{ m.pct_geo }} %</b><small class="nt-nota"> · {{ m.poligono }} con polígono</small></td></tr>
+              } @empty { <tr><td colspan="6" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay municipios.' }}</td></tr> }
+            </tbody>
+          }
+          @case ('solicitudes') {
+            <thead><tr><th>Solicitante</th><th>Rol pedido</th><th>Contacto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (s of filas(); track s.id) {
+                <tr><td><strong>{{ s.nombre }}</strong><br /><small class="nt-nota">{{ s.codigo }} · {{ s.municipio || 'Sin municipio' }}</small></td>
+                  <td>{{ s.rol_solicitado_display }}</td><td><small>{{ s.email || s.username }}<br />{{ s.telefono }}</small></td><td>{{ fechaCorta(s.fecha) }}</td>
+                  <td><span class="nt-estado" [class.oscuro]="s.estado === 'rechazada'" [class.gris]="s.estado === 'pendiente'">{{ s.estado === 'pendiente' ? 'Pendiente' : s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada' }}</span></td>
+                  <td class="der">
+                    @if (s.estado === 'pendiente') {
+                      <button type="button" class="nt-btn-oscuro chico" (click)="resolver(s, 'aprobar')" [disabled]="ocupado() === s.id">Aprobar</button>
+                      <button type="button" class="nt-btn-borde chico" (click)="resolver(s, 'rechazar')" [disabled]="ocupado() === s.id">Rechazar</button>
+                    } @else { <small class="nt-nota">por {{ s.resuelta_por }}</small> }
+                  </td></tr>
+              } @empty { <tr><td colspan="6" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay solicitudes en este estado.' }}</td></tr> }
+            </tbody>
+          }
+          @case ('auditoria') {
+            <thead><tr><th>Fecha / hora</th><th>Usuario</th><th>Acción</th><th>Recurso / detalle</th><th>Resultado</th></tr></thead>
+            <tbody>
+              @for (e of filas(); track e.id) {
+                <tr><td>{{ fechaCorta(e.fecha) }}</td><td><strong>{{ e.usuario }}</strong></td><td>{{ e.accion }}</td>
+                  <td class="nt-verde">{{ e.recurso }}@if (e.detalle) { · {{ e.detalle }} }</td>
+                  <td><span class="nt-estado" [class.oscuro]="e.resultado === 'rechazado'">{{ e.resultado === 'completado' ? 'Completado' : 'Rechazado' }}</span></td></tr>
+              } @empty { <tr><td colspan="5" class="nt-vacio">{{ cargando() ? 'Cargando…' : 'No hay eventos con esos filtros.' }}</td></tr> }
+            </tbody>
+          }
+        }
+      </table>
+    </div>
+
+    @if (vista === 'auditoria') {
+      <div class="nt-fila pie"><span class="nt-nota">Página {{ pagina() }} de {{ totalPaginas() }} · {{ total().toLocaleString('es-CO') }} registros · Historial de solo lectura</span>
+        <span class="pag"><button type="button" class="nt-enlace" (click)="irA(pagina() - 1)" [disabled]="pagina() === 1">Anterior</button>
+          <button type="button" class="nt-enlace" (click)="irA(pagina() + 1)" [disabled]="pagina() === totalPaginas()">Siguiente</button></span></div>
+    }
+  </article>
+</section>

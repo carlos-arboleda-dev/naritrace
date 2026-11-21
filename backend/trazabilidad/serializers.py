@@ -182,7 +182,7 @@ class TrazabilidadPublicaSerializer(serializers.ModelSerializer):
             'codigo', 'producto', 'variedad', 'cantidad', 'unidad',
             'fecha_cosecha', 'proceso', 'notas_produccion',
             'productor', 'finca', 'linea_tiempo', 'certificaciones',
-            'fecha_publicacion'
+            'fecha_publicacion', 'hash_blockchain'
         ]
 
     def get_productor(self, obj):

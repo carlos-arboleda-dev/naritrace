@@ -1,0 +1,29 @@
+:host { display: block; }
+.filtros { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 14px; align-items: end; }
+.rango { display: flex; align-items: center; border: 1px solid var(--nt-borde); border-radius: 9px; background: var(--nt-crema); padding-right: 8px; }
+.rango input { border: 0; min-height: 40px; padding: 8px 6px 8px 12px; background: transparent; }
+.rango i { font-style: normal; color: var(--nt-verde-500); }
+.exportar { height: 42px; }
+.sub { margin: 2px 0 12px; }
+.hbars { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.pie { margin-top: 14px; align-items: center; }
+.inv { grid-template-columns: 1.55fr 1fr; }
+.cifras { display: flex; gap: 38px; margin-top: 14px; flex-wrap: wrap; }
+.cifras div { display: flex; flex-direction: column; }
+.cifras strong { font-size: 26px; font-weight: 800; }
+.cifras span { font-size: 12px; color: var(--nt-verde-500); }
+.solicitudes { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.txt { margin: 10px 0; line-height: 1.5; }
+.datos { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0 0 12px; font-size: 12.5px; }
+.datos dt { color: var(--nt-verde-500); } .datos dd { margin: 0; font-weight: 700; }
+.medidor { margin-top: 12px; font-size: 12.5px; }
+.pista { display: block; height: 9px; background: var(--nt-menta-100); border-radius: 6px; overflow: hidden; margin-top: 5px; }
+.pista i { display: block; height: 100%; background: var(--nt-verde-700); border-radius: 6px; }
+.mix { grid-template-columns: 96px 1fr 30px; }
+.alertas { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.alertas li { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; font-size: 13px; }
+.top { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.top li { display: grid; grid-template-columns: 112px 1fr 30px; gap: 8px; align-items: center; }
+.top b { text-align: right; }
+.filtros-audit { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+@media (max-width: 1000px) { .filtros, .filtros-audit, .inv { grid-template-columns: 1fr; } }

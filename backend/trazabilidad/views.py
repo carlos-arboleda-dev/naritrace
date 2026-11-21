@@ -2,13 +2,18 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny, IsAuthenticated
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.views import APIView
+from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncMonth
 from django.db.models import Q, Count
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from usuarios.models import ROLES_INTERMEDIARIOS
+from . import ledger, operaciones
+from .auditoria import auditar
 from .pagination import PaginacionEstandar
 from .models import Producto, Finca, Lote, Movimiento, Certificacion, ConsultaPublica
 from .serializers import (
@@ -51,15 +56,16 @@ class FincaViewSet(viewsets.ModelViewSet):
     """
     queryset = Finca.objects.all()
     serializer_class = FincaSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        # Filtrar por productor si no es admin
         user = self.request.user
-        if user.is_authenticated and user.rol == 'productor':
+        if user.rol == 'productor':
             queryset = queryset.filter(productor=user)
+        elif user.rol != 'administrador':
+            queryset = queryset.none()
 
         municipio = self.request.query_params.get('municipio')
         if municipio:
@@ -68,11 +74,13 @@ class FincaViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        # Un productor solo puede crear fincas a su nombre
+        # Solo productores (a su nombre) y administradores crean fincas
         if self.request.user.rol == 'productor':
             serializer.save(productor=self.request.user)
-        else:
+        elif self.request.user.rol == 'administrador':
             serializer.save()
+        else:
+            raise PermissionDenied('Tu rol no puede registrar fincas.')
 
 
 # ============================================
@@ -81,9 +89,10 @@ class FincaViewSet(viewsets.ModelViewSet):
 class LoteViewSet(viewsets.ModelViewSet):
     """
     Lotes trazables. Generan QR automáticamente.
+    Los lotes publicados quedan sellados: no se editan ni se eliminan.
     """
     queryset = Lote.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
     pagination_class = PaginacionEstandar
 
     def get_serializer_class(self):
@@ -93,13 +102,16 @@ class LoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-
-        # Filtro por productor
         user = self.request.user
-        if user.is_authenticated and user.rol == 'productor':
-            queryset = queryset.filter(productor=user)
 
-        # Filtros por query params
+        if user.rol == 'productor':
+            queryset = queryset.filter(productor=user)
+        elif user.rol in ROLES_INTERMEDIARIOS:
+            queryset = queryset.exclude(estado='borrador').filter(
+                Q(custodio=user) | Q(movimientos__actor=user)).distinct()
+        elif user.rol != 'administrador':
+            queryset = queryset.none()
+
         estado = self.request.query_params.get('estado')
         if estado:
             queryset = queryset.filter(estado=estado)
@@ -123,16 +135,36 @@ class LoteViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        # Asignar productor automáticamente
-        if self.request.user.rol == 'productor':
-            serializer.save(productor=self.request.user)
-        else:
-            serializer.save()
+        if self.request.user.rol != 'productor':
+            raise PermissionDenied('Solo los productores registran lotes.')
+        lote = serializer.save(productor=self.request.user)
+        auditar(self.request.user, 'Guardó borrador',
+                f"{lote.producto.nombre} · {lote.finca.nombre}", lote.variedad)
+
+    def update(self, request, *args, **kwargs):
+        lote = self.get_object()
+        if lote.estado != 'borrador':
+            return Response({'error': 'Un lote publicado está sellado y no se puede modificar.'},
+                            status=status.HTTP_409_CONFLICT)
+        if request.user.rol != 'productor':
+            raise PermissionDenied('Solo el productor edita sus borradores.')
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        lote = self.get_object()
+        if lote.estado != 'borrador':
+            return Response({'error': 'Un lote publicado no se puede eliminar.'},
+                            status=status.HTTP_409_CONFLICT)
+        if request.user.rol != 'productor':
+            raise PermissionDenied('Solo el productor elimina sus borradores.')
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'], url_path='publicar')
     def publicar(self, request, pk=None):
-        """Publica un borrador: genera su código (NT-AAMMDD-NNN) y su QR."""
+        """Publica un borrador: genera código y QR y lo sella en el registro encadenado."""
         lote = self.get_object()
+        if request.user.rol != 'productor':
+            raise PermissionDenied('Solo el productor publica sus lotes.')
         if lote.estado != 'borrador':
             return Response(
                 {'error': 'Solo se pueden publicar lotes en borrador'},
@@ -143,24 +175,37 @@ class LoteViewSet(viewsets.ModelViewSet):
                 {'error': 'Define la cantidad del lote antes de publicarlo'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        lote.estado = 'publicado'
-        lote.fecha_publicacion = timezone.now()
-        lote.codigo = None      # se vuelve a generar en save() con el formato vigente
-        lote.qr_codigo = ''
-        lote.save()
+        with transaction.atomic():
+            lote.estado = 'publicado'
+            lote.fecha_publicacion = timezone.now()
+            lote.codigo = None      # se vuelve a generar en save() con el formato vigente
+            lote.qr_codigo = ''
+            lote.custodio = lote.productor
+            lote.save()
+            ledger.sellar_lote(lote)
+        lote.refresh_from_db()
+        auditar(request.user, 'Publicó lote', lote.codigo, f"{lote.producto.nombre} · {lote.finca.nombre}")
         return Response({
             'mensaje': f'Lote {lote.codigo} publicado',
             'codigo': lote.codigo,
             'qr_codigo': lote.qr_codigo,
+            'hash_blockchain': lote.hash_blockchain,
             'lote': LoteDetailSerializer(lote, context={'request': request}).data,
         })
+
+    @action(detail=True, methods=['get'], url_path='verificar')
+    def verificar(self, request, pk=None):
+        """Comprueba que los datos del lote y su historial no fueron alterados."""
+        lote = self.get_object()
+        resultado = ledger.verificar_lote(lote)
+        return Response({'codigo': lote.codigo, **resultado})
 
     @action(detail=False, methods=['get'], url_path='por-codigo/(?P<codigo>[^/.]+)',
             permission_classes=[AllowAny])
     def por_codigo(self, request, codigo=None):
         """Busca un lote por su código público (para escaneo QR)"""
         try:
-            lote = Lote.objects.get(codigo=codigo, estado='publicado')
+            lote = Lote.objects.exclude(estado__in=['borrador', 'archivado']).get(codigo=codigo)
         except Lote.DoesNotExist:
             return Response(
                 {'error': 'Lote no encontrado'},
@@ -175,20 +220,44 @@ class LoteViewSet(viewsets.ModelViewSet):
 # MOVIMIENTO VIEWSET
 # ============================================
 class MovimientoViewSet(viewsets.ModelViewSet):
+    """
+    Movimientos de un lote. Son inmutables: solo se pueden crear y consultar.
+    Distribuidores, acopiadores y transportadores operan con /api/operaciones/.
+    """
     queryset = Movimiento.objects.all()
     serializer_class = MovimientoSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.rol == 'productor':
+            queryset = queryset.filter(lote__productor=user)
+        elif user.rol in ROLES_INTERMEDIARIOS:
+            queryset = queryset.filter(Q(lote__custodio=user) | Q(actor=user))
+        elif user.rol != 'administrador':
+            queryset = queryset.none()
         lote_id = self.request.query_params.get('lote')
         if lote_id:
             queryset = queryset.filter(lote_id=lote_id)
         return queryset
 
-    def perform_create(self, serializer):
-        # El actor siempre es el usuario autenticado
-        serializer.save(actor=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        lote = serializer.validated_data['lote']
+        # Aquí solo el productor del lote registra eventos propios (beneficio, secado, etc.)
+        if request.user.rol != 'productor' or lote.productor_id != request.user.id:
+            raise PermissionDenied('Solo el productor del lote puede registrar eventos aquí.')
+        if lote.estado == 'borrador':
+            raise ValidationError({'lote': 'Publica el lote antes de registrar eventos.'})
+        d = serializer.validated_data
+        mov = operaciones.crear_movimiento(
+            lote, request.user, d['tipo'], d.get('origen', ''), d.get('destino', ''),
+            d.get('descripcion', ''), d.get('latitud'), d.get('longitud'))
+        return Response(self.get_serializer(mov).data, status=status.HTTP_201_CREATED)
+
 
 # ============================================
 # CERTIFICACION VIEWSET
@@ -199,7 +268,7 @@ class CertificacionViewSet(viewsets.ModelViewSet):
     """
     queryset = Certificacion.objects.all()
     serializer_class = CertificacionSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -224,7 +293,7 @@ class TrazabilidadPublicaViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         try:
-            lote = Lote.objects.get(codigo=pk, estado='publicado')
+            lote = Lote.objects.exclude(estado__in=['borrador', 'archivado']).get(codigo=pk)
         except Lote.DoesNotExist:
             return Response(
                 {'error': 'No existe un lote publicado con ese código'},
@@ -234,6 +303,16 @@ class TrazabilidadPublicaViewSet(viewsets.ViewSet):
         serializer = TrazabilidadPublicaSerializer(lote)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='verificar')
+    def verificar(self, request, pk=None):
+        """¿Los datos de este lote siguen siendo los que se sellaron? (no cuenta como consulta)"""
+        lote = Lote.objects.exclude(estado__in=['borrador', 'archivado']).filter(codigo=pk).first()
+        if not lote:
+            return Response({'error': 'No existe un lote publicado con ese código'}, status=status.HTTP_404_NOT_FOUND)
+        r = ledger.verificar_lote(lote)
+        # Público: solo el veredicto y la huella, sin detalles internos
+        return Response({'codigo': lote.codigo, 'valida': r['valida'], 'sellado': r['sellado'], 'bloques': r['bloques'],
+                         'hash': r['hash'], 'verificado_en': r['verificado_en']})
 
 
 class MeView(APIView):
@@ -242,7 +321,15 @@ class MeView(APIView):
 
     def get(self, request):
         u = request.user
+        solicitud = u.solicitudes.order_by('-fecha_solicitud').first()
         return Response({
+            'codigo': u.codigo,
+            'solicitud': {
+                'rol_solicitado': solicitud.rol_solicitado,
+                'rol_solicitado_display': solicitud.get_rol_solicitado_display(),
+                'estado': solicitud.estado,
+                'nota': solicitud.nota,
+            } if solicitud else None,
             'id': u.id,
             'username': u.username,
             'email': u.email,

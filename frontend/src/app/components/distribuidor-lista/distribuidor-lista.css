@@ -1,0 +1,7 @@
+:host { display: block; }
+.pestanas { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.pestanas button { background: transparent; border: 1px solid var(--nt-borde); color: var(--nt-texto-suave); font: inherit; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+.pestanas button.on { background: var(--nt-verde-900); color: #fff; border-color: var(--nt-verde-900); }
+.busq { max-width: 420px; margin-bottom: 14px; }
+.der { text-align: right; white-space: nowrap; }
+.chico { padding: 6px 12px; font-size: 12px; border-radius: 8px; margin-left: 6px; }

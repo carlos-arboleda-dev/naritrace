@@ -54,3 +54,30 @@ class ConsultaPublicaAdmin(admin.ModelAdmin):
     list_display = ('lote', 'fecha')
     list_filter = ('fecha',)
     search_fields = ('lote__codigo',)
+
+
+from .models import BloqueLedger, EventoAuditoria
+
+
+class SoloLectura(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(BloqueLedger)
+class BloqueLedgerAdmin(SoloLectura):
+    list_display = ('indice', 'tipo', 'referencia', 'hash', 'fecha')
+    list_filter = ('tipo',)
+
+
+@admin.register(EventoAuditoria)
+class EventoAuditoriaAdmin(SoloLectura):
+    list_display = ('fecha', 'usuario', 'accion', 'recurso', 'resultado')
+    list_filter = ('resultado', 'accion')
+    search_fields = ('recurso', 'detalle', 'usuario__username')

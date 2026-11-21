@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { PanelApiService } from '../../services/panel-api';
 
 @Component({
   selector: 'app-trazabilidad-publica',
@@ -29,6 +30,18 @@ import { ApiService } from '../../services/api';
           </div>
 
           <div class="card-body p-4">
+            <!-- Sello de integridad -->
+            <div *ngIf="integridad && integridad.sellado !== false" class="alert py-2 small d-flex align-items-start gap-2"
+                 [ngClass]="integridad.valida ? 'alert-success' : 'alert-danger'">
+              <span>{{ integridad.valida ? '🔒' : '⚠️' }}</span>
+              <span *ngIf="integridad.valida">
+                <strong>Registro protegido.</strong> Los datos de este lote y su recorrido ({{ integridad.bloques }} registros sellados)
+                no han sido modificados desde que se publicaron.
+                <span class="d-block text-muted" style="font-family: monospace; font-size: 11px;">Huella: {{ integridad.hash.slice(0, 24) }}…</span>
+              </span>
+              <span *ngIf="!integridad.valida"><strong>Atención.</strong> Los datos de este lote no coinciden con los que se sellaron al publicarlo. Contacta a quien te lo entregó.</span>
+            </div>
+
             <!-- Resumen del producto -->
             <div class="row mb-5 border-bottom pb-4">
               <div class="col-md-8">
@@ -133,10 +146,12 @@ import { ApiService } from '../../services/api';
 export class TrazabilidadPublicaComponent implements OnInit {
   lote: any = null;
   error = '';
+  integridad: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
+    private panel: PanelApiService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -152,6 +167,10 @@ export class TrazabilidadPublicaComponent implements OnInit {
       next: (data) => {
         this.lote = data;
         this.cdr.detectChanges();
+        this.panel.verificarPublico(codigo).subscribe({
+          next: r => { this.integridad = r; this.cdr.detectChanges(); },
+          error: () => {}
+        });
       },
       error: (err) => {
         this.error = 'No se encontró información para este código QR. Es posible que el lote no esté publicado.';
